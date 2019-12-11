@@ -110,6 +110,7 @@ def setup_logging():
              {'prog': sys.argv[0],
               'version': version.version_info.release_string()})
     LOG.debug("command line: %s", " ".join(sys.argv))
+    LOG.info("command line: %s", " ".join(sys.argv))
 
 
 def reset_service():
