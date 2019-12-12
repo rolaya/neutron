@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import sys
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import port_resource_request
 from neutron_lib.api.definitions import portbindings
@@ -46,6 +47,10 @@ from neutron.objects.qos import qos_policy_validator as checker
 from neutron.objects.qos import rule_type as rule_type_object
 from neutron.services.qos.drivers import manager
 
+from oslo_config import cfg
+from oslo_log import log as logging
+
+LOG = logging.getLogger(__name__)
 
 @resource_extend.has_resource_extenders
 class QoSPlugin(qos.QoSPluginBase):
@@ -69,6 +74,10 @@ class QoSPlugin(qos.QoSPluginBase):
 
     def __init__(self):
         super(QoSPlugin, self).__init__()
+
+        this_function_name =  sys._getframe().f_code.co_name
+        LOG.info("QoSPlugin: %s: Logging enabled!", this_function_name)
+
         self.driver_manager = manager.QosServiceDriverManager()
 
         callbacks_registry.subscribe(
@@ -602,3 +611,5 @@ class QoSPlugin(qos.QoSPluginBase):
             filters[qos_consts.QOS_POLICY_ID] = policy_id
             pager = base_obj.Pager(sorts, limit, page_reverse, marker)
             return rule_cls.get_objects(context, _pager=pager, **filters)
+
+
