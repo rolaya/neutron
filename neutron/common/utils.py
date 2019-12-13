@@ -979,3 +979,22 @@ def timecost(f):
         ret = f(*args, **kwargs)
         return ret
     return wrapper
+
+def get_function_name():
+    fname = sys._getframe(1).f_code.co_name
+    LOG.info("testtest %s", fname)
+    return fname
+
+def get_caller_name():
+    function_name = sys._getframe(2).f_code.co_name
+    return function_name
+
+def log_function_entry():
+
+    # We are logging the function which called this function and its caller
+    fname = sys._getframe(1).f_code.co_name
+    caller = sys._getframe(2).f_code.co_name
+
+    # Log name of executing function and name of caller
+    LOG.info(fname +"(): caller: " +caller)
+
