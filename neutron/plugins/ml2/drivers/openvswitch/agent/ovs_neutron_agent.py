@@ -143,6 +143,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         :param bridge_classes: a dict for bridge classes.
         :param conf: an instance of ConfigOpts
         '''
+        #n_utils.log_function_entry()
         super(OVSNeutronAgent, self).__init__()
         self.conf = conf or cfg.CONF
         self.ovs = ovs_lib.BaseOVS()
@@ -2483,6 +2484,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             self.loop_count_and_wait(start, port_stats)
 
     def daemon_loop(self):
+        n_utils.log_function_entry()
         # Start everything.
         LOG.info("Agent initialized successfully, now running... ")
         signal.signal(signal.SIGTERM, self._handle_sigterm)
@@ -2537,6 +2539,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
 def validate_local_ip(local_ip):
     """Verify if the ip exists on the agent's host."""
+    n_utils.log_function_entry()
     if not ip_lib.IPWrapper().get_device_by_ip(local_ip):
         LOG.error("Tunneling can't be enabled with invalid local_ip '%s'."
                   " IP couldn't be found on this host's interfaces.",
@@ -2546,6 +2549,7 @@ def validate_local_ip(local_ip):
 
 def validate_tunnel_config(tunnel_types, local_ip):
     """Verify local ip and tunnel config if tunneling is enabled."""
+    n_utils.log_function_entry()
     if not tunnel_types:
         return
 
@@ -2557,6 +2561,7 @@ def validate_tunnel_config(tunnel_types, local_ip):
 
 
 def prepare_xen_compute():
+    n_utils.log_function_entry()
     is_xen_compute_host = 'rootwrap-xen-dom0' in cfg.CONF.AGENT.root_helper \
         or xenapi_root_helper.ROOT_HELPER_DAEMON_TOKEN == \
         cfg.CONF.AGENT.root_helper_daemon

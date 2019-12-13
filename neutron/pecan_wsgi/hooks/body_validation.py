@@ -20,13 +20,17 @@ import webob.exc
 from neutron._i18n import _
 from neutron.api.v2 import base as v2_base
 from neutron.pecan_wsgi.hooks import utils
+from neutron.common import utils as neutron_utils
+from oslo_log import log as logging
 
+LOG = logging.getLogger(__name__)
 
 class BodyValidationHook(hooks.PecanHook):
-
+    neutron_utils.log_function_entry()
     priority = 120
 
     def before(self, state):
+        neutron_utils.log_function_entry()
         if state.request.method not in ('POST', 'PUT'):
             return
         resource = state.request.context.get('resource')

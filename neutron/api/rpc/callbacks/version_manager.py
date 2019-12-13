@@ -18,6 +18,7 @@ import time
 from neutron_lib.plugins import directory
 from oslo_log import log as logging
 from oslo_utils import importutils
+from neutron.common import utils
 
 from neutron.api.rpc.callbacks import exceptions
 
@@ -32,10 +33,12 @@ VERSIONS_TTL = 60
 #                  neutron.api.rpc.callbacks.resources and provide
 #                  a decorator to expose classes
 def _import_resources():
+    utils.log_function_entry()
     return importutils.import_module('neutron.api.rpc.callbacks.resources')
 
 
 def _import_agents_db():
+    utils.log_function_entry()
     return importutils.import_module('neutron.db.agents_db')
 
 
@@ -45,6 +48,7 @@ AgentConsumer.__repr__ = lambda self: '%s@%s' % self
 
 
 class ResourceConsumerTracker(object):
+    utils.log_function_entry()
     """Class passed down to collect consumer's resource versions.
 
     This class is responsible for fetching the local versions of
@@ -60,6 +64,7 @@ class ResourceConsumerTracker(object):
     """
 
     def __init__(self):
+        utils.log_function_entry()
         # Initialize with the local (server) versions, as we always want
         # to send those. Agents, as they upgrade, will need the latest version,
         # and there is a corner case we'd not be covering otherwise:
@@ -84,6 +89,7 @@ class ResourceConsumerTracker(object):
         self.last_report = None
 
     def _get_local_resource_versions(self):
+        utils.log_function_entry()
         resources = _import_resources()
         local_resource_versions = collections.defaultdict(set)
         for resource_type, version in (
@@ -94,6 +100,7 @@ class ResourceConsumerTracker(object):
     # TODO(mangelajo): add locking with _recalculate_versions if we ever
     #                  move out of green threads.
     def _set_version(self, consumer, resource_type, version):
+        utils.log_function_entry()
         """Set or update a consumer resource type version."""
         self._versions[resource_type].add(version)
         consumer_versions = self._versions_by_consumer[consumer]
@@ -119,6 +126,7 @@ class ResourceConsumerTracker(object):
                        'consumer': consumer})
 
     def set_versions(self, consumer, versions):
+        utils.log_function_entry()
         """Set or update an specific consumer resource types.
 
         :param consumer: should be an AgentConsumer object, with agent_type
@@ -139,6 +147,7 @@ class ResourceConsumerTracker(object):
             self._handle_no_set_versions(consumer)
 
     def _cleanup_removed_versions(self, consumer, versions):
+        utils.log_function_entry()
         """Check if any version report has been removed, and cleanup."""
         prev_resource_types = set(
             self._versions_by_consumer[consumer].keys())
@@ -151,6 +160,7 @@ class ResourceConsumerTracker(object):
             self._set_version(consumer, resource_type, None)
 
     def _handle_no_set_versions(self, consumer):
+        utils.log_function_entry()
         """Handle consumers reporting no versions."""
         if self._versions_by_consumer[consumer]:
             self._needs_recalculation = True
@@ -158,6 +168,7 @@ class ResourceConsumerTracker(object):
         self._versions_by_consumer[consumer] = {}
 
     def get_resource_versions(self, resource_type):
+        utils.log_function_entry()
         """Fetch the versions necessary to notify all consumers."""
         if self._needs_recalculation:
             self._recalculate_versions()
@@ -166,6 +177,7 @@ class ResourceConsumerTracker(object):
         return copy.copy(self._versions[resource_type])
 
     def report(self):
+        utils.log_function_entry()
         """Output debug information about the consumer versions."""
         format = lambda versions: pprint.pformat(dict(versions), indent=4)
         debug_dict = {'pushed_versions': format(self._versions),
@@ -179,6 +191,7 @@ class ResourceConsumerTracker(object):
 
     # TODO(mangelajo): Add locking if we ever move out of greenthreads.
     def _recalculate_versions(self):
+        utils.log_function_entry()
         """Recalculate the _versions set.
 
         Re-fetch the local (server) versions and expand with consumers'
@@ -192,14 +205,17 @@ class ResourceConsumerTracker(object):
 
 
 class CachedResourceConsumerTracker(object):
+    utils.log_function_entry()
     """This class takes care of the caching logic of versions."""
 
     def __init__(self):
+        utils.log_function_entry()
         # This is TTL expiration time, 0 means it will be expired at start
         self._expires_at = 0
         self._versions = ResourceConsumerTracker()
 
     def _update_consumer_versions(self):
+        utils.log_function_entry()
         new_tracker = ResourceConsumerTracker()
         neutron_plugin = directory.get_plugin()
         agents_db = _import_agents_db()
@@ -218,18 +234,22 @@ class CachedResourceConsumerTracker(object):
         self._versions.report()
 
     def _check_expiration(self):
+        utils.log_function_entry()
         if time.time() > self._expires_at:
             self._update_consumer_versions()
             self._expires_at = time.time() + VERSIONS_TTL
 
     def get_resource_versions(self, resource_type):
+        utils.log_function_entry()
         self._check_expiration()
         return self._versions.get_resource_versions(resource_type)
 
     def update_versions(self, consumer, resource_versions):
+        utils.log_function_entry()
         self._versions.set_versions(consumer, resource_versions)
 
     def report(self):
+        utils.log_function_entry()
         self._check_expiration()
         self._versions.report()
 
@@ -239,6 +259,7 @@ _cached_version_tracker = None
 
 # NOTE(ajo): add locking if we ever stop using greenthreads
 def _get_cached_tracker():
+    utils.log_function_entry()
     global _cached_version_tracker
     if not _cached_version_tracker:
         _cached_version_tracker = CachedResourceConsumerTracker()
@@ -246,15 +267,18 @@ def _get_cached_tracker():
 
 
 def get_resource_versions(resource_type):
+    utils.log_function_entry()
     """Return the set of versions expected by the consumers of a resource."""
     return _get_cached_tracker().get_resource_versions(resource_type)
 
 
 def update_versions(consumer, resource_versions):
+    utils.log_function_entry()
     """Update the resources' versions for a consumer id."""
     _get_cached_tracker().update_versions(consumer, resource_versions)
 
 
 def report():
+    utils.log_function_entry()
     """Report resource versions in debug logs."""
     _get_cached_tracker().report()

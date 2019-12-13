@@ -997,4 +997,5 @@ def log_function_entry():
 
     # Log name of executing function and name of caller
     LOG.info(fname +"(): caller: " +caller)
+    #LOG.info(fname +"(): ")
 
