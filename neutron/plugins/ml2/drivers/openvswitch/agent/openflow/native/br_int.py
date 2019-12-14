@@ -26,6 +26,7 @@ from os_ken.lib.packet import ether_types
 from os_ken.lib.packet import icmpv6
 from os_ken.lib.packet import in_proto
 from oslo_log import log as logging
+from neutron.common import utils
 
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
@@ -36,11 +37,13 @@ LOG = logging.getLogger(__name__)
 
 
 class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
+    utils.log_function_entry()
     """openvswitch agent br-int specific logic."""
 
     of_tables = constants.INT_BR_ALL_TABLES
 
     def setup_default_table(self):
+        utils.log_function_entry()
         self.setup_canary_table()
         self.install_goto(dest_table_id=constants.TRANSIENT_TABLE)
         self.install_normal(table_id=constants.TRANSIENT_TABLE, priority=3)
@@ -50,9 +53,11 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
                           vlan_vid=constants.DEAD_VLAN_TAG)
 
     def setup_canary_table(self):
+        utils.log_function_entry()
         self.install_drop(constants.CANARY_TABLE)
 
     def check_canary_table(self):
+        utils.log_function_entry()
         try:
             flows = self.dump_flows(constants.CANARY_TABLE)
         except RuntimeError:
@@ -62,9 +67,11 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
 
     @staticmethod
     def _local_vlan_match(_ofp, ofpp, port, vlan_vid):
+        utils.log_function_entry()
         return ofpp.OFPMatch(in_port=port, vlan_vid=vlan_vid)
 
     def provision_local_vlan(self, port, lvid, segmentation_id):
+        utils.log_function_entry()
         (_dp, ofp, ofpp) = self._get_dp()
         if segmentation_id is None:
             vlan_vid = ofp.OFPVID_NONE
@@ -87,6 +94,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
         )
 
     def reclaim_local_vlan(self, port, segmentation_id):
+        utils.log_function_entry()
         (_dp, ofp, ofpp) = self._get_dp()
         if segmentation_id is None:
             vlan_vid = ofp.OFPVID_NONE
@@ -97,6 +105,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
 
     @staticmethod
     def _arp_dvr_dst_mac_match(ofp, ofpp, vlan, dvr_mac):
+        utils.log_function_entry()
         # If eth_dst is equal to the dvr mac of this host, then
         # flag it as matched.
         return ofpp.OFPMatch(vlan_vid=vlan | ofp.OFPVID_PRESENT,
@@ -104,6 +113,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
 
     @staticmethod
     def _dvr_dst_mac_table_id(network_type):
+        utils.log_function_entry()
         if network_type == p_const.TYPE_VLAN:
             return constants.ARP_DVR_MAC_TO_DST_MAC_VLAN
         else:
@@ -111,6 +121,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
 
     def install_dvr_dst_mac_for_arp(self, network_type,
                                     vlan_tag, gateway_mac, dvr_mac, rtr_port):
+        utils.log_function_entry()
         table_id = self._dvr_dst_mac_table_id(network_type)
         # Match the destination MAC with the DVR MAC
         (_dp, ofp, ofpp) = self._get_dp()
@@ -133,11 +144,13 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
 
     @staticmethod
     def _dvr_to_src_mac_match(ofp, ofpp, vlan_tag, dst_mac):
+        utils.log_function_entry()
         return ofpp.OFPMatch(vlan_vid=vlan_tag | ofp.OFPVID_PRESENT,
                              eth_dst=dst_mac)
 
     @staticmethod
     def _dvr_to_src_mac_table_id(network_type):
+        utils.log_function_entry()
         if network_type == p_const.TYPE_VLAN:
             return constants.DVR_TO_SRC_MAC_VLAN
         else:
@@ -145,6 +158,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
 
     def install_dvr_to_src_mac(self, network_type,
                                vlan_tag, gateway_mac, dst_mac, dst_port):
+        utils.log_function_entry()
         table_id = self._dvr_to_src_mac_table_id(network_type)
         (_dp, ofp, ofpp) = self._get_dp()
         match = self._dvr_to_src_mac_match(ofp, ofpp,
@@ -170,6 +184,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
                                    actions=actions)
 
     def delete_dvr_to_src_mac(self, network_type, vlan_tag, dst_mac):
+        utils.log_function_entry()
         table_id = self._dvr_to_src_mac_table_id(network_type)
         (_dp, ofp, ofpp) = self._get_dp()
         match = self._dvr_to_src_mac_match(ofp, ofpp,
@@ -179,6 +194,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
                 strict=True, priority=4, table_id=table, match=match)
 
     def add_dvr_mac_vlan(self, mac, port):
+        utils.log_function_entry()
         self.install_goto(table_id=constants.LOCAL_SWITCHING,
                           priority=4,
                           in_port=port,
@@ -186,11 +202,13 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
                           dest_table_id=constants.DVR_TO_SRC_MAC_VLAN)
 
     def remove_dvr_mac_vlan(self, mac):
+        utils.log_function_entry()
         # REVISIT(yamamoto): match in_port as well?
         self.uninstall_flows(table_id=constants.LOCAL_SWITCHING,
                              eth_src=mac)
 
     def add_dvr_mac_tun(self, mac, port):
+        utils.log_function_entry()
         self.install_goto(table_id=constants.LOCAL_SWITCHING,
                           priority=2,
                           in_port=port,
@@ -198,11 +216,13 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
                           dest_table_id=constants.DVR_TO_SRC_MAC)
 
     def remove_dvr_mac_tun(self, mac, port):
+        utils.log_function_entry()
         self.uninstall_flows(table_id=constants.LOCAL_SWITCHING,
                              in_port=port, eth_src=mac)
 
     def delete_dvr_dst_mac_for_arp(self, network_type,
                                    vlan_tag, gateway_mac, dvr_mac, rtr_port):
+        utils.log_function_entry()
         table_id = self._dvr_to_src_mac_table_id(network_type)
         (_dp, ofp, ofpp) = self._get_dp()
         match = self._arp_dvr_dst_mac_match(ofp, ofpp, vlan_tag, dvr_mac)
@@ -210,6 +230,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
             strict=True, priority=5, table_id=table_id, match=match)
 
     def add_dvr_gateway_mac_arp_vlan(self, mac, port):
+        utils.log_function_entry()
         self.install_goto(table_id=constants.LOCAL_SWITCHING,
                           priority=5,
                           in_port=port,
@@ -217,10 +238,12 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
                           dest_table_id=constants.ARP_DVR_MAC_TO_DST_MAC_VLAN)
 
     def remove_dvr_gateway_mac_arp_vlan(self, mac, port):
+        utils.log_function_entry()
         self.uninstall_flows(table_id=constants.LOCAL_SWITCHING,
                              eth_dst=mac)
 
     def add_dvr_gateway_mac_arp_tun(self, mac, port):
+        utils.log_function_entry()
         self.install_goto(table_id=constants.LOCAL_SWITCHING,
                           priority=5,
                           in_port=port,
@@ -228,22 +251,26 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
                           dest_table_id=constants.ARP_DVR_MAC_TO_DST_MAC)
 
     def remove_dvr_gateway_mac_arp_tun(self, mac, port):
+        utils.log_function_entry()
         self.uninstall_flows(table_id=constants.LOCAL_SWITCHING,
                              eth_dst=mac)
 
     @staticmethod
     def _arp_reply_match(ofp, ofpp, port):
+        utils.log_function_entry()
         return ofpp.OFPMatch(in_port=port,
                              eth_type=ether_types.ETH_TYPE_ARP)
 
     @staticmethod
     def _icmpv6_reply_match(ofp, ofpp, port):
+        utils.log_function_entry()
         return ofpp.OFPMatch(in_port=port,
                              eth_type=ether_types.ETH_TYPE_IPV6,
                              ip_proto=in_proto.IPPROTO_ICMPV6,
                              icmpv6_type=icmpv6.ND_NEIGHBOR_ADVERT)
 
     def install_icmpv6_na_spoofing_protection(self, port, ip_addresses):
+        utils.log_function_entry()
         # Allow neighbor advertisements as long as they match addresses
         # that actually belong to the port.
         for ip in ip_addresses:
@@ -267,6 +294,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
 
     def set_allowed_macs_for_port(self, port, mac_addresses=None,
                                   allow_all=False):
+        utils.log_function_entry()
         if allow_all:
             self.uninstall_flows(table_id=constants.LOCAL_SWITCHING,
                                  in_port=port)
@@ -297,6 +325,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
                           dest_table_id=constants.MAC_SPOOF_TABLE)
 
     def install_arp_spoofing_protection(self, port, ip_addresses):
+        utils.log_function_entry()
         # allow ARP replies as long as they match addresses that actually
         # belong to the port.
         for ip in ip_addresses:
@@ -320,6 +349,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
                           dest_table_id=constants.ARP_SPOOF_TABLE)
 
     def delete_arp_spoofing_protection(self, port):
+        utils.log_function_entry()
         (_dp, ofp, ofpp) = self._get_dp()
         match = self._arp_reply_match(ofp, ofpp, port=port)
         self.uninstall_flows(table_id=constants.LOCAL_SWITCHING,
@@ -330,10 +360,12 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
         self.delete_arp_spoofing_allow_rules(port)
 
     def delete_arp_spoofing_allow_rules(self, port):
+        utils.log_function_entry()
         self.uninstall_flows(table_id=constants.ARP_SPOOF_TABLE,
                              in_port=port)
 
     def install_dscp_marking_rule(self, port, dscp_mark):
+        utils.log_function_entry()
         # reg2 is a metadata field that does not alter packets.
         # By loading a value into this field and checking if the value is
         # altered it allows the packet to be resubmitted and go through
