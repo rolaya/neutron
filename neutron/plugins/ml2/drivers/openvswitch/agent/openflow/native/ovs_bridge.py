@@ -26,18 +26,21 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.openflow \
     import br_cookie
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import ofswitch
-
+from neutron.common import utils
 
 LOG = logging.getLogger(__name__)
 
 
 class OVSAgentBridge(ofswitch.OpenFlowSwitchMixin,
                      br_cookie.OVSBridgeCookieMixin, ovs_lib.OVSBridge):
+    utils.log_function_entry()
+
     """Common code for bridges used by OVS agent"""
 
     _cached_dpid = None
 
     def _get_dp(self):
+        utils.log_function_entry()
         """Get (dp, ofp, ofpp) tuple for the switch.
 
         A convenient method for openflow message composers.
@@ -71,6 +74,7 @@ class OVSAgentBridge(ofswitch.OpenFlowSwitchMixin,
                     self._cached_dpid = new_dpid
 
     def setup_controllers(self, conf):
+        utils.log_function_entry()
         url = ipv6_utils.valid_ipv6_url(conf.OVS.of_listen_address,
                                         conf.OVS.of_listen_port)
         controllers = ["tcp:" + url]
@@ -95,4 +99,5 @@ class OVSAgentBridge(ofswitch.OpenFlowSwitchMixin,
         self.set_controllers_inactivity_probe(conf.OVS.of_inactivity_probe)
 
     def drop_port(self, in_port):
+        utils.log_function_entry()
         self.install_drop(priority=2, in_port=in_port)
