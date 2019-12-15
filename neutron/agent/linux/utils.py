@@ -21,6 +21,7 @@ import shlex
 import socket
 import threading
 import time
+import sys
 
 import eventlet
 from eventlet.green import subprocess
@@ -45,15 +46,18 @@ LOG = logging.getLogger(__name__)
 
 
 class RootwrapDaemonHelper(object):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     __client = None
     __lock = threading.Lock()
 
     def __new__(cls):
+        LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
         """There is no reason to instantiate this class"""
         raise NotImplementedError()
 
     @classmethod
     def get_client(cls):
+        LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
         with cls.__lock:
             if cls.__client is None:
                 if (xenapi_root_helper.ROOT_HELPER_DAEMON_TOKEN ==
@@ -66,6 +70,7 @@ class RootwrapDaemonHelper(object):
 
 
 def addl_env_args(addl_env):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     """Build arguments for adding additional environment vars with env"""
 
     # NOTE (twilson) If using rootwrap, an EnvFilter should be set up for the
@@ -76,6 +81,7 @@ def addl_env_args(addl_env):
 
 
 def create_process(cmd, run_as_root=False, addl_env=None):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     """Create a process object for the given command.
 
     The return value will be a tuple of the process object and the
@@ -94,6 +100,7 @@ def create_process(cmd, run_as_root=False, addl_env=None):
 
 
 def execute_rootwrap_daemon(cmd, process_input, addl_env):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     cmd = list(map(str, addl_env_args(addl_env) + cmd))
     # NOTE(twilson) oslo_rootwrap.daemon will raise on filter match
     # errors, whereas oslo_rootwrap.cmd converts them to return codes.
@@ -112,6 +119,7 @@ def execute_rootwrap_daemon(cmd, process_input, addl_env):
 def execute(cmd, process_input=None, addl_env=None,
             check_exit_code=True, return_stderr=False, log_fail_as_error=True,
             extra_ok_codes=None, run_as_root=False):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     try:
         if process_input is not None:
             _process_input = encodeutils.to_utf8(process_input)
@@ -156,6 +164,7 @@ def execute(cmd, process_input=None, addl_env=None,
 
 
 def find_child_pids(pid, recursive=False):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     """Retrieve a list of the pids of child processes of the given pid.
 
     It can also find all children through the hierarchy if recursive=True
@@ -179,6 +188,7 @@ def find_child_pids(pid, recursive=False):
 
 
 def find_parent_pid(pid):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     """Retrieve the pid of the parent process of the given pid.
 
     If the pid doesn't exist in the system, this function will return
@@ -199,6 +209,7 @@ def find_parent_pid(pid):
 
 
 def get_process_count_by_name(name):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     """Find the process count by name."""
     try:
         out = execute(['ps', '-C', name, '-o', 'comm='],
@@ -210,6 +221,7 @@ def get_process_count_by_name(name):
 
 
 def find_fork_top_parent(pid):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     """Retrieve the pid of the top parent of the given pid through a fork.
 
     This function will search the top parent with its same cmdline. If the
@@ -225,6 +237,7 @@ def find_fork_top_parent(pid):
 
 
 def kill_process(pid, signal, run_as_root=False):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     """Kill the process with the given pid using the given signal."""
     try:
         execute(['kill', '-%d' % signal, pid], run_as_root=run_as_root)
@@ -234,6 +247,7 @@ def kill_process(pid, signal, run_as_root=False):
 
 
 def _get_conf_base(cfg_root, uuid, ensure_conf_dir):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     # TODO(mangelajo): separate responsibilities here, ensure_conf_dir
     #                  should be a separate function
     conf_dir = os.path.abspath(os.path.normpath(cfg_root))
@@ -244,12 +258,14 @@ def _get_conf_base(cfg_root, uuid, ensure_conf_dir):
 
 
 def get_conf_file_name(cfg_root, uuid, cfg_file, ensure_conf_dir=False):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     """Returns the file name for a given kind of config file."""
     conf_base = _get_conf_base(cfg_root, uuid, ensure_conf_dir)
     return "%s.%s" % (conf_base, cfg_file)
 
 
 def get_value_from_file(filename, converter=None):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
 
     try:
         with open(filename, 'r') as f:
@@ -263,12 +279,14 @@ def get_value_from_file(filename, converter=None):
 
 
 def remove_conf_files(cfg_root, uuid):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     conf_base = _get_conf_base(cfg_root, uuid, False)
     for file_path in glob.iglob("%s.*" % conf_base):
         os.unlink(file_path)
 
 
 def get_root_helper_child_pid(pid, expected_cmd, run_as_root=False):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     """Get the first non root_helper child pid in the process hierarchy.
 
     If root helper was used, two or more processes would be created:
@@ -300,6 +318,7 @@ def get_root_helper_child_pid(pid, expected_cmd, run_as_root=False):
 
 
 def remove_abs_path(cmd):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     """Remove absolute path of executable in cmd
 
     Note: New instance of list is returned
@@ -315,6 +334,7 @@ def remove_abs_path(cmd):
 
 
 def process_is_running(pid):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     """Find if the given PID is running in the system.
 
     """
@@ -322,6 +342,7 @@ def process_is_running(pid):
 
 
 def get_cmdline_from_pid(pid):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     if not process_is_running(pid):
         return []
     # NOTE(jh): Even after the above check, the process may terminate
@@ -345,6 +366,7 @@ def get_cmdline_from_pid(pid):
 
 
 def cmd_matches_expected(cmd, expected_cmd):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     abs_cmd = remove_abs_path(cmd)
     abs_expected_cmd = remove_abs_path(expected_cmd)
     if abs_cmd != abs_expected_cmd:
@@ -356,6 +378,7 @@ def cmd_matches_expected(cmd, expected_cmd):
 
 
 def pid_invoked_with_cmdline(pid, expected_cmd):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     """Validate process with given pid is running with provided parameters
 
     """
@@ -364,6 +387,7 @@ def pid_invoked_with_cmdline(pid, expected_cmd):
 
 
 def ensure_directory_exists_without_file(path):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     dirname = os.path.dirname(path)
     if os.path.isdir(dirname):
         try:
@@ -377,6 +401,7 @@ def ensure_directory_exists_without_file(path):
 
 
 def is_effective_user(user_id_or_name):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     """Returns True if user_id_or_name is effective user (id/name)."""
     euid = os.geteuid()
     if str(user_id_or_name) == str(euid):
@@ -386,6 +411,7 @@ def is_effective_user(user_id_or_name):
 
 
 def is_effective_group(group_id_or_name):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     """Returns True if group_id_or_name is effective group (id/name)."""
     egid = os.getegid()
     if str(group_id_or_name) == str(egid):
@@ -395,14 +421,17 @@ def is_effective_group(group_id_or_name):
 
 
 class UnixDomainHTTPConnection(httplib.HTTPConnection):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     """Connection class for HTTP over UNIX domain socket."""
     def __init__(self, host, port=None, strict=None, timeout=None,
                  proxy_info=None):
+        LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
         httplib.HTTPConnection.__init__(self, host, port, strict)
         self.timeout = timeout
         self.socket_path = cfg.CONF.metadata_proxy_socket
 
     def connect(self):
+        LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         if self.timeout:
             self.sock.settimeout(self.timeout)
@@ -410,7 +439,9 @@ class UnixDomainHTTPConnection(httplib.HTTPConnection):
 
 
 class UnixDomainHttpProtocol(eventlet.wsgi.HttpProtocol):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     def __init__(self, *args):
+        LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
         # NOTE(yamahata): from eventlet v0.22 HttpProtocol.__init__
         # signature was changed by changeset of
         # 7f53465578543156e7251e243c0636e087a8445f
@@ -443,7 +474,9 @@ class UnixDomainHttpProtocol(eventlet.wsgi.HttpProtocol):
 
 
 class UnixDomainWSGIServer(wsgi.Server):
+    LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
     def __init__(self, name, num_threads=None):
+        LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
         self._socket = None
         self._launcher = None
         self._server = None
@@ -451,6 +484,7 @@ class UnixDomainWSGIServer(wsgi.Server):
                                                    num_threads=num_threads)
 
     def start(self, application, file_socket, workers, backlog, mode=None):
+        LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
         self._socket = eventlet.listen(file_socket,
                                        family=socket.AF_UNIX,
                                        backlog=backlog)
@@ -460,6 +494,7 @@ class UnixDomainWSGIServer(wsgi.Server):
         self._launch(application, workers=workers)
 
     def _run(self, application, socket):
+        LOG.info('%s() caller: %s()', sys._getframe(0).f_code.co_name, sys._getframe(1).f_code.co_name)
         """Start a WSGI service in a new green thread."""
         logger = logging.getLogger('eventlet.wsgi.server')
         eventlet.wsgi.server(socket,
