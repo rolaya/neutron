@@ -980,20 +980,26 @@ def timecost(f):
         return ret
     return wrapper
 
-def get_function_name():
-    fname = sys._getframe(1).f_code.co_name
+def get_fname(stack_frame):
+    fname = sys._getframe(stack_frame).f_code.co_name
     return fname
 
-def get_caller_name():
-    function_name = sys._getframe(2).f_code.co_name
-    return function_name
-
-def log_function_entry():
+def log_entry():
 
     # We are logging the function which called this function and its caller
-    fname = sys._getframe(1).f_code.co_name
-    caller = sys._getframe(2).f_code.co_name
+    fname = get_fname(1)
+    caller = get_fname(2)
 
     # Log name of executing function and name of caller
     LOG.info(fname +"(): caller: " +caller)
+
+def log_entry_msg(msg):
+
+    # We are logging the function which called this function and its caller
+    fname = get_fname(1)
+    caller = get_fname(2)
+
+    # Log name of executing function and name of caller
+    LOG.info(fname +"(): caller: " +caller +" [" +msg +"]")
+
 

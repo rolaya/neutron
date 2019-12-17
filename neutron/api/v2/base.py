@@ -161,7 +161,7 @@ class Controller(object):
         response returned to the user because the user is not authorized
         to see them.
         """
-        utils.log_function_entry()
+        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
         attributes_to_exclude = []
         for attr_name in data.keys():
             # TODO(amotoki): At now, all attribute maps have tenant_id and
@@ -432,7 +432,7 @@ class Controller(object):
                 # it is then deleted
 
     def create(self, request, body=None, **kwargs):
-        utils.log_function_entry()
+        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
         self._notifier.info(request.context,
                             self._resource + '.create.start',
                             body)
@@ -715,7 +715,7 @@ class Controller(object):
         body argument must be the deserialized body.
         """
 
-        utils.log_function_entry()
+        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
         
         collection = resource + "s"
         if not body:
@@ -765,7 +765,7 @@ class Controller(object):
         return body
 
     def _validate_network_tenant_ownership(self, request, resource_item):
-        utils.log_function_entry()
+        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
         # TODO(salvatore-orlando): consider whether this check can be folded
         # in the policy engine
         if (request.context.is_admin or request.context.is_advsvc or
@@ -788,7 +788,7 @@ class Controller(object):
 
     def _set_parent_id_into_ext_resources_request(
             self, request, resource_item, parent_id, is_get=False):
-        utils.log_function_entry()
+        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
         if not parent_id:
             return
 
@@ -822,7 +822,7 @@ class Controller(object):
 def create_resource(collection, resource, plugin, params, allow_bulk=False,
                     member_actions=None, parent=None, allow_pagination=False,
                     allow_sorting=False):
-    utils.log_function_entry()
+    LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
     controller = Controller(plugin, collection, resource, params, allow_bulk,
                             member_actions=member_actions, parent=parent,
                             allow_pagination=allow_pagination,

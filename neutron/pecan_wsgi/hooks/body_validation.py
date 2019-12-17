@@ -19,18 +19,18 @@ import webob.exc
 
 from neutron._i18n import _
 from neutron.api.v2 import base as v2_base
-from neutron.pecan_wsgi.hooks import utils
-from neutron.common import utils as neutron_utils
+from neutron.pecan_wsgi.hooks import utils as wsgi_utils
+from neutron.common import utils
 from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
 
 class BodyValidationHook(hooks.PecanHook):
-    neutron_utils.log_function_entry()
+    LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
     priority = 120
 
     def before(self, state):
-        neutron_utils.log_function_entry()
+        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
         if state.request.method not in ('POST', 'PUT'):
             return
         resource = state.request.context.get('resource')
@@ -56,7 +56,7 @@ class BodyValidationHook(hooks.PecanHook):
             # member action is being processed or on agent scheduler operations
             return
         # Prepare data to be passed to the plugin from request body
-        controller = utils.get_controller(state)
+        controller = wsgi_utils.get_controller(state)
         data = v2_base.Controller.prepare_request_body(
             neutron_context,
             json_data,
