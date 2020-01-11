@@ -41,6 +41,9 @@ from neutron.conf import common as common_config
 from neutron.tests.common import l3_test_common
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
+from neutron.common import log_utils
+
+LOG = logging.getLogger(__name__)
 
 
 _uuid = uuidutils.generate_uuid

@@ -46,6 +46,7 @@ from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import qos_policy_validator as checker
 from neutron.objects.qos import rule_type as rule_type_object
 from neutron.services.qos.drivers import manager
+from neutron.common import log_utils
 
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -54,6 +55,8 @@ LOG = logging.getLogger(__name__)
 
 @resource_extend.has_resource_extenders
 class QoSPlugin(qos.QoSPluginBase):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
+
     """Implementation of the Neutron QoS Service Plugin.
 
     This class implements a Quality of Service plugin that provides quality of
@@ -73,6 +76,8 @@ class QoSPlugin(qos.QoSPluginBase):
     __filter_validation_support = True
 
     def __init__(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
+
         super(QoSPlugin, self).__init__()
 
         this_function_name =  sys._getframe().f_code.co_name
@@ -96,6 +101,7 @@ class QoSPlugin(qos.QoSPluginBase):
     @staticmethod
     @resource_extend.extends([port_def.COLLECTION_NAME])
     def _extend_port_resource_request(port_res, port_db):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Add resource request to a port."""
         if isinstance(port_db, ports_object.Port):
             qos_id = port_db.qos_policy_id or port_db.qos_network_policy_id
@@ -150,6 +156,7 @@ class QoSPlugin(qos.QoSPluginBase):
         return port_res
 
     def _get_ports_with_policy(self, context, policy):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         networks_ids = policy.get_bound_networks()
         ports_with_net_policy = ports_object.Port.get_objects(
             context, network_id=networks_ids)
@@ -167,6 +174,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
     def _validate_create_port_callback(self, resource, event, trigger,
                                        **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         context = kwargs['context']
         port_id = kwargs['port']['id']
         port = ports_object.Port.get_object(context, id=port_id)
@@ -181,6 +189,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
     def _validate_update_port_callback(self, resource, event, trigger,
                                        payload=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         context = payload.context
         original_policy_id = payload.states[0].get(
             qos_consts.QOS_POLICY_ID)
@@ -198,6 +207,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
     def _validate_update_network_callback(self, resource, event, trigger,
                                           payload=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         context = payload.context
         original_network = payload.states[0]
         updated_network = payload.desired_state
@@ -219,14 +229,17 @@ class QoSPlugin(qos.QoSPluginBase):
         self.validate_policy_for_ports(context, policy, ports)
 
     def validate_policy(self, context, policy):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         ports = self._get_ports_with_policy(context, policy)
         self.validate_policy_for_ports(context, policy, ports)
 
     def validate_policy_for_ports(self, context, policy, ports):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         for port in ports:
             self.validate_policy_for_port(context, policy, port)
 
     def validate_policy_for_port(self, context, policy, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         for rule in policy.rules:
             if not self.driver_manager.validate_rule_for_port(rule, port):
                 raise qos_exc.QosRuleNotSupported(rule_type=rule.rule_type,
@@ -242,6 +255,7 @@ class QoSPlugin(qos.QoSPluginBase):
                                                       port_id=port['id'])
 
     def reject_min_bw_rule_updates(self, context, policy):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         ports = self._get_ports_with_policy(context, policy)
         for port in ports:
             # NOTE(bence romsics): In some cases the presence of
@@ -261,6 +275,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
     @db_base_plugin_common.convert_result_to_dict
     def create_policy(self, context, policy):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Create a QoS policy.
 
         :param context: neutron api request context
@@ -290,6 +305,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
     @db_base_plugin_common.convert_result_to_dict
     def update_policy(self, context, policy_id, policy):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Update a QoS policy.
 
         :param context: neutron api request context
@@ -316,6 +332,7 @@ class QoSPlugin(qos.QoSPluginBase):
         return policy_obj
 
     def delete_policy(self, context, policy_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Delete a QoS policy.
 
         :param context: neutron api request context
@@ -338,6 +355,7 @@ class QoSPlugin(qos.QoSPluginBase):
     @db_base_plugin_common.filter_fields
     @db_base_plugin_common.convert_result_to_dict
     def get_policy(self, context, policy_id, fields=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Get a QoS policy.
 
         :param context: neutron api request context
@@ -353,6 +371,7 @@ class QoSPlugin(qos.QoSPluginBase):
     @db_base_plugin_common.convert_result_to_dict
     def get_policies(self, context, filters=None, fields=None, sorts=None,
                      limit=None, marker=None, page_reverse=False):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Get QoS policies.
 
         :param context: neutron api request context
@@ -370,6 +389,7 @@ class QoSPlugin(qos.QoSPluginBase):
     @db_base_plugin_common.filter_fields
     @db_base_plugin_common.convert_result_to_dict
     def get_rule_type(self, context, rule_type_name, fields=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not context.is_admin:
             raise lib_exc.NotAuthorized()
         return rule_type_object.QosRuleType.get_object(rule_type_name)
@@ -379,19 +399,23 @@ class QoSPlugin(qos.QoSPluginBase):
     def get_rule_types(self, context, filters=None, fields=None,
                        sorts=None, limit=None,
                        marker=None, page_reverse=False):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not filters:
             filters = {}
         return rule_type_object.QosRuleType.get_objects(**filters)
 
     def supported_rule_type_details(self, rule_type_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.driver_manager.supported_rule_type_details(rule_type_name)
 
     @property
     def supported_rule_types(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.driver_manager.supported_rule_types
 
     @db_base_plugin_common.convert_result_to_dict
     def create_policy_rule(self, context, rule_cls, policy_id, rule_data):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Create a QoS policy rule.
 
         :param context: neutron api request context
@@ -429,6 +453,7 @@ class QoSPlugin(qos.QoSPluginBase):
     @db_base_plugin_common.convert_result_to_dict
     def update_policy_rule(self, context, rule_cls, rule_id, policy_id,
                            rule_data):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Update a QoS policy rule.
 
         :param context: neutron api request context
@@ -468,6 +493,7 @@ class QoSPlugin(qos.QoSPluginBase):
         return rule
 
     def _get_policy_id(self, context, rule_cls, rule_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         with db_api.autonested_transaction(context.session):
             rule_object = rule_cls.get_object(context, id=rule_id)
             if not rule_object:
@@ -475,6 +501,7 @@ class QoSPlugin(qos.QoSPluginBase):
         return rule_object.qos_policy_id
 
     def update_rule(self, context, rule_cls, rule_id, rule_data):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Update a QoS policy rule alias. This method processes a QoS policy
         rule update, where the rule is an API first level resource instead of a
         subresource of a policy.
@@ -499,6 +526,7 @@ class QoSPlugin(qos.QoSPluginBase):
                                        rule_data)
 
     def delete_policy_rule(self, context, rule_cls, rule_id, policy_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Delete a QoS policy rule.
 
         :param context: neutron api request context
@@ -526,6 +554,7 @@ class QoSPlugin(qos.QoSPluginBase):
         self.driver_manager.call(qos_consts.UPDATE_POLICY, context, policy)
 
     def delete_rule(self, context, rule_cls, rule_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Delete a QoS policy rule alias. This method processes a QoS policy
         rule delete, where the rule is an API first level resource instead of a
         subresource of a policy.
@@ -547,6 +576,7 @@ class QoSPlugin(qos.QoSPluginBase):
     @db_base_plugin_common.convert_result_to_dict
     def get_policy_rule(self, context, rule_cls, rule_id, policy_id,
                         fields=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Get a QoS policy rule.
 
         :param context: neutron api request context
@@ -570,6 +600,7 @@ class QoSPlugin(qos.QoSPluginBase):
         return rule
 
     def get_rule(self, context, rule_cls, rule_id, fields=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Get a QoS policy rule alias. This method processes a QoS policy
         rule get, where the rule is an API first level resource instead of a
         subresource of a policy
@@ -593,6 +624,7 @@ class QoSPlugin(qos.QoSPluginBase):
     def get_policy_rules(self, context, rule_cls, policy_id, filters=None,
                          fields=None, sorts=None, limit=None, marker=None,
                          page_reverse=False):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Get QoS policy rules.
 
         :param context: neutron api request context

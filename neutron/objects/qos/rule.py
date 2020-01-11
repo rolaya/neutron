@@ -16,6 +16,7 @@
 import abc
 import sys
 
+from oslo_log import log
 from neutron_lib import constants
 from neutron_lib.objects import common_types
 from neutron_lib.services.qos import constants as qos_consts
@@ -27,11 +28,14 @@ import six
 
 from neutron.db.qos import models as qos_db_model
 from neutron.objects import base
+from neutron.common import log_utils
 
 DSCP_MARK = 'dscp_mark'
 
+LOG = log.getLogger(__name__)
 
 def get_rules(obj_cls, context, qos_policy_id):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     all_rules = []
     with obj_cls.db_context_reader(context):
         for rule_type in qos_consts.VALID_RULE_TYPES:
@@ -45,6 +49,7 @@ def get_rules(obj_cls, context, qos_policy_id):
 
 @six.add_metaclass(abc.ABCMeta)
 class QosRule(base.NeutronDbObject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version, only BandwidthLimitRule
     #         1.1: Added DscpMarkingRule
     #         1.2: Added QosMinimumBandwidthRule
@@ -68,6 +73,7 @@ class QosRule(base.NeutronDbObject):
     duplicates_compare_fields = ()
 
     def duplicates(self, other_rule):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Returns True if rules have got same values in fields defined in
         'duplicates_compare_fields' list.
 
@@ -85,11 +91,13 @@ class QosRule(base.NeutronDbObject):
         return True
 
     def to_dict(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         dict_ = super(QosRule, self).to_dict()
         dict_['type'] = self.rule_type
         return dict_
 
     def should_apply_to_port(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Check whether a rule can be applied to a specific port.
 
         This function has the logic to decide whether a rule should
@@ -118,6 +126,7 @@ class QosRule(base.NeutronDbObject):
                  is_network_policy_only))
 
     def obj_make_compatible(self, primitive, target_version):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         _target_version = versionutils.convert_version_to_tuple(target_version)
         if _target_version < (1, 3):
             raise exception.IncompatibleObjectVersion(
@@ -126,6 +135,7 @@ class QosRule(base.NeutronDbObject):
 
 @base.NeutronObjectRegistry.register
 class QosBandwidthLimitRule(QosRule):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     db_model = qos_db_model.QosBandwidthLimitRule
 
@@ -143,6 +153,7 @@ class QosBandwidthLimitRule(QosRule):
 
 @base.NeutronObjectRegistry.register
 class QosDscpMarkingRule(QosRule):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     db_model = qos_db_model.QosDscpMarkingRule
 
@@ -155,6 +166,7 @@ class QosDscpMarkingRule(QosRule):
 
 @base.NeutronObjectRegistry.register
 class QosMinimumBandwidthRule(QosRule):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     db_model = qos_db_model.QosMinimumBandwidthRule
 

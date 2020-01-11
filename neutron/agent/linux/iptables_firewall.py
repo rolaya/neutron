@@ -33,6 +33,7 @@ from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import utils as a_utils
 from neutron.common import _constants as const
 from neutron.common import utils as c_utils
+from neutron.common import log_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -48,21 +49,25 @@ libc = ctypes.CDLL(util.find_library('libc.so.6'))
 
 
 def get_hybrid_port_name(port_name):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     return (constants.TAP_DEVICE_PREFIX + port_name)[:constants.LINUX_DEV_LEN]
 
 
 class mac_iptables(netaddr.mac_eui48):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """mac format class for netaddr to match iptables representation."""
     word_sep = ':'
 
 
 class IptablesFirewallDriver(firewall.FirewallDriver):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Driver which enforces security groups through iptables rules."""
     IPTABLES_DIRECTION = {constants.INGRESS_DIRECTION: 'physdev-out',
                           constants.EGRESS_DIRECTION: 'physdev-in'}
     CONNTRACK_ZONE_PER_PORT = False
 
     def __init__(self, namespace=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.iptables = iptables_manager.IptablesManager(
             state_less=True,
             use_ipv6=netutils.is_ipv6_enabled(),
@@ -98,6 +103,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     @staticmethod
     def _check_netfilter_for_bridges():
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Check if br_netfilter is loaded and the needed flags for IPtables"""
         log_warning = False
         if not a_utils.execute(
@@ -127,10 +133,12 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     @property
     def ports(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return dict(self.filtered_ports, **self.unfiltered_ports)
 
     def _update_remote_security_group_members(self, sec_group_ids):
         for sg_id in sec_group_ids:
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
             for device in self.filtered_ports.values():
                 if sg_id in device.get('security_group_source_groups', []):
                     self.devices_with_updated_sg_members[sg_id].append(device)
@@ -147,6 +155,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                 self._update_remote_security_group_members(sec_group_ids)
 
     def process_trusted_ports(self, port_ids):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Process ports that are trusted and shouldn't be filtered."""
         for port in port_ids:
             if port not in self.trusted_ports:
@@ -156,6 +165,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                 self.trusted_ports.append(port)
 
     def remove_trusted_ports(self, port_ids):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         for port in port_ids:
             if port in self.trusted_ports:
                 jump_rule = self._generate_trusted_port_rules(port)
@@ -164,22 +174,26 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                 self.trusted_ports.remove(port)
 
     def _generate_trusted_port_rules(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         rt = '-m physdev --%%s %s --physdev-is-bridged -j ACCEPT' % (
             self._get_device_name(port))
         return [rt % (self.IPTABLES_DIRECTION[constants.INGRESS_DIRECTION]),
                 rt % (self.IPTABLES_DIRECTION[constants.EGRESS_DIRECTION])]
 
     def update_security_group_rules(self, sg_id, sg_rules):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         LOG.debug("Update rules of security group (%s)", sg_id)
         self.sg_rules[sg_id] = sg_rules
 
     def update_security_group_members(self, sg_id, sg_members):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         LOG.debug("Update members of security group (%s)", sg_id)
         self.sg_members[sg_id] = collections.defaultdict(list, sg_members)
         if self.enable_ipset:
             self._update_ipset_members(sg_id, sg_members)
 
     def _update_ipset_members(self, sg_id, sg_members):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         devices = self.devices_with_updated_sg_members.pop(sg_id, None)
         for ip_version, current_ips in sg_members.items():
             add_ips, del_ips = self.ipset.set_members(
@@ -191,6 +205,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                     devices, ip_version, ips)
 
     def _set_ports(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not firewall.port_sec_enabled(port):
             self.unfiltered_ports[port['device']] = port
             self.filtered_ports.pop(port['device'], None)
@@ -199,10 +214,12 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             self.unfiltered_ports.pop(port['device'], None)
 
     def _unset_ports(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.unfiltered_ports.pop(port['device'], None)
         self.filtered_ports.pop(port['device'], None)
 
     def _remove_conntrack_entries_from_port_deleted(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         device_info = self.filtered_ports.get(port['device'])
         if not device_info:
             return
@@ -211,6 +228,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                 [device_info], ethertype, set())
 
     def prepare_port_filter(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         LOG.debug("Preparing device (%s) filter", port['device'])
         self._set_ports(port)
         # each security group has it own chains
@@ -218,6 +236,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return self.iptables.apply()
 
     def update_port_filter(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         LOG.debug("Updating device (%s) filter", port['device'])
         if port['device'] not in self.ports:
             LOG.info('Attempted to update port filter which is not '
@@ -229,6 +248,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return self.iptables.apply()
 
     def remove_port_filter(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         LOG.debug("Removing device (%s) filter", port['device'])
         if port['device'] not in self.ports:
             LOG.info('Attempted to remove port filter which is not '
@@ -241,12 +261,15 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return self.iptables.apply()
 
     def _add_accept_rule_port_sec(self, port, direction):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self._update_port_sec_rules(port, direction, add=True)
 
     def _remove_rule_port_sec(self, port, direction):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self._update_port_sec_rules(port, direction, add=False)
 
     def _remove_rule_from_chain_v4v6(self, chain_name, ipv4_rules, ipv6_rules):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         for rule in ipv4_rules:
             self.iptables.ipv4['filter'].remove_rule(chain_name, rule)
 
@@ -254,12 +277,14 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             self.iptables.ipv6['filter'].remove_rule(chain_name, rule)
 
     def _setup_chains(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Setup ingress and egress chain for a port."""
         if not self._defer_apply:
             self._setup_chains_apply(self.filtered_ports,
                                      self.unfiltered_ports)
 
     def _setup_chains_apply(self, ports, unfiltered_ports):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self._add_chain_by_name_v4v6(SG_CHAIN)
         # sort by port so we always do this deterministically between
         # agent restarts and don't cause unnecessary rule differences
@@ -276,12 +301,14 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             self._add_accept_rule_port_sec(port, constants.EGRESS_DIRECTION)
 
     def _remove_chains(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Remove ingress and egress chain for a port."""
         if not self._defer_apply:
             self._remove_chains_apply(self.filtered_ports,
                                       self.unfiltered_ports)
 
     def _remove_chains_apply(self, ports, unfiltered_ports):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         for port in ports.values():
             self._remove_chain(port, constants.INGRESS_DIRECTION)
             self._remove_chain(port, constants.EGRESS_DIRECTION)
@@ -293,14 +320,17 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self._remove_chain_by_name_v4v6(SG_CHAIN)
 
     def _setup_chain(self, port, DIRECTION):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self._add_chain(port, DIRECTION)
         self._add_rules_by_security_group(port, DIRECTION)
 
     def _remove_chain(self, port, DIRECTION):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         chain_name = self._port_chain_name(port, DIRECTION)
         self._remove_chain_by_name_v4v6(chain_name)
 
     def _add_fallback_chain_v4v6(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.iptables.ipv4['filter'].add_chain('sg-fallback')
         self.iptables.ipv4['filter'].add_rule('sg-fallback', '-j DROP',
                                               comment=ic.UNMATCH_DROP)
@@ -309,15 +339,18 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                                               comment=ic.UNMATCH_DROP)
 
     def _add_chain_by_name_v4v6(self, chain_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.iptables.ipv4['filter'].add_chain(chain_name)
         self.iptables.ipv6['filter'].add_chain(chain_name)
 
     def _remove_chain_by_name_v4v6(self, chain_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.iptables.ipv4['filter'].remove_chain(chain_name)
         self.iptables.ipv6['filter'].remove_chain(chain_name)
 
     def _add_rules_to_chain_v4v6(self, chain_name, ipv4_rules, ipv6_rules,
                                  top=False, comment=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         for rule in ipv4_rules:
             self.iptables.ipv4['filter'].add_rule(chain_name, rule,
                                                   top=top, comment=comment)
@@ -327,11 +360,13 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                                                   top=top, comment=comment)
 
     def _get_device_name(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not isinstance(port, dict):
             return port
         return port['device']
 
     def _update_port_sec_rules(self, port, direction, add=False):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # add/remove rules in FORWARD and INPUT chain
         device = self._get_device_name(port)
 
@@ -353,6 +388,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                     'INPUT', jump_rule, jump_rule)
 
     def _add_chain(self, port, direction):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         chain_name = self._port_chain_name(port, direction)
         self._add_chain_by_name_v4v6(chain_name)
 
@@ -385,9 +421,11 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                                           comment=ic.INPUT_TO_SG)
 
     def _get_br_device_name(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return ('brq' + port['network_id'])[:constants.LINUX_DEV_LEN]
 
     def _get_jump_rules(self, port, create=True):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         zone = self.ipconntrack.get_device_zone(port, create=create)
         if not zone:
             return []
@@ -408,22 +446,27 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return rules
 
     def _add_conntrack_jump(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         for jump_rule in self._get_jump_rules(port):
             self._add_raw_rule('PREROUTING', jump_rule)
 
     def _remove_conntrack_jump(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         for jump_rule in self._get_jump_rules(port, create=False):
             self._remove_raw_rule('PREROUTING', jump_rule)
 
     def _add_raw_rule(self, chain, rule, comment=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.iptables.ipv4['raw'].add_rule(chain, rule, comment=comment)
         self.iptables.ipv6['raw'].add_rule(chain, rule, comment=comment)
 
     def _remove_raw_rule(self, chain, rule):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.iptables.ipv4['raw'].remove_rule(chain, rule)
         self.iptables.ipv6['raw'].remove_rule(chain, rule)
 
     def _split_sgr_by_ethertype(self, security_group_rules):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         ipv4_sg_rules = []
         ipv6_sg_rules = []
         for rule in security_group_rules:
@@ -436,11 +479,13 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return ipv4_sg_rules, ipv6_sg_rules
 
     def _select_sgr_by_direction(self, port, direction):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return [rule
                 for rule in port.get('security_group_rules', [])
                 if rule['direction'] == direction]
 
     def _setup_spoof_filter_chain(self, port, table, mac_ip_pairs, rules):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if mac_ip_pairs:
             chain_name = self._port_chain_name(port, SPOOF_FILTER)
             table.add_chain(chain_name)
@@ -462,6 +507,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _build_ipv4v6_mac_ip_list(self, mac, ip_address, mac_ipv4_pairs,
                                   mac_ipv6_pairs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         mac = str(netaddr.EUI(mac, dialect=mac_iptables))
         if netaddr.IPNetwork(ip_address).version == 4:
             mac_ipv4_pairs.append((mac, ip_address))
@@ -474,6 +520,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                 mac_ipv6_pairs.append((mac, lla))
 
     def _spoofing_rule(self, port, ipv4_rules, ipv6_rules):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # Fixed rules for traffic sourced from unspecified addresses: 0.0.0.0
         # and ::
         # Allow dhcp client discovery and request
@@ -524,6 +571,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                                     '-j RETURN', comment=ic.DHCP_CLIENT)]
 
     def _drop_dhcp_rule(self, ipv4_rules, ipv6_rules):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # Note(nati) Drop dhcp packet from VM
         ipv4_rules += [comment_rule('-p udp -m udp --sport 67 '
                                     '--dport 68 '
@@ -533,6 +581,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                                     '-j DROP', comment=ic.DHCP_SPOOF)]
 
     def _accept_inbound_icmpv6(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # Allow multicast listener, neighbor solicitation and
         # neighbor advertisement into the instance
         icmpv6_rules = []
@@ -542,6 +591,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return icmpv6_rules
 
     def _select_sg_rules_for_port(self, port, direction):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Select rules from the security groups the port is member of."""
         port_sg_ids = port.get('security_groups', [])
         port_rules = []
@@ -558,6 +608,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return port_rules
 
     def _expand_sg_rule_with_remote_ips(self, rule, port, direction):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Expand a remote group rule to rule per remote group IP."""
         remote_group_id = rule.get('remote_group_id')
         if remote_group_id:
@@ -576,6 +627,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             yield rule
 
     def _get_remote_sg_ids(self, port, direction=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         sg_ids = port.get('security_groups', [])
         remote_sg_ids = {constants.IPv4: set(), constants.IPv6: set()}
         for sg_id in sg_ids:
@@ -588,6 +640,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return remote_sg_ids
 
     def _add_rules_by_security_group(self, port, direction):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # select rules for current port and direction
         security_group_rules = self._select_sgr_by_direction(port, direction)
         security_group_rules += self._select_sg_rules_for_port(port, direction)
@@ -617,12 +670,14 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _add_fixed_egress_rules(self, port, ipv4_iptables_rules,
                                 ipv6_iptables_rules):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self._spoofing_rule(port,
                             ipv4_iptables_rules,
                             ipv6_iptables_rules)
         self._drop_dhcp_rule(ipv4_iptables_rules, ipv6_iptables_rules)
 
     def _generate_ipset_rule_args(self, sg_rule, remote_gid):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         ethertype = sg_rule.get('ethertype')
         ipset_name = self.ipset.get_name(remote_gid, ethertype)
         if not self.ipset.set_name_exists(ipset_name):
@@ -636,6 +691,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return args
 
     def _generate_protocol_and_port_args(self, sg_rule):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         is_port = (sg_rule.get('source_port_range_min') is not None or
                    sg_rule.get('port_range_min') is not None)
         args = self._protocol_arg(sg_rule.get('protocol'), is_port)
@@ -650,6 +706,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return args
 
     def _generate_plain_rule_args(self, sg_rule):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # These arguments MUST be in the format iptables-save will
         # display them: source/dest, protocol, sport, dport, target
         # Otherwise the iptables_manager code won't be able to find
@@ -661,6 +718,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return args
 
     def _convert_sg_rule_to_iptables_args(self, sg_rule):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         remote_gid = sg_rule.get('remote_group_id')
         if self.enable_ipset and remote_gid:
             return self._generate_ipset_rule_args(sg_rule, remote_gid)
@@ -668,6 +726,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             return self._generate_plain_rule_args(sg_rule)
 
     def _convert_sgr_to_iptables_rules(self, security_group_rules):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         iptables_rules = []
         self._allow_established(iptables_rules)
         seen_sg_rules = set()
@@ -688,12 +747,14 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return iptables_rules
 
     def _drop_invalid_packets(self, iptables_rules):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # Always drop invalid packets
         iptables_rules += [comment_rule('-m state --state ' 'INVALID -j DROP',
                                         comment=ic.INVALID_DROP)]
         return iptables_rules
 
     def _allow_established(self, iptables_rules):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # Allow established connections
         iptables_rules += [comment_rule(
             '-m state --state RELATED,ESTABLISHED -j RETURN',
@@ -701,9 +762,11 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return iptables_rules
 
     def _local_protocol_name_map(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         local_protocol_name_map = {}
         try:
             class protoent(ctypes.Structure):
+                LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
                 _fields_ = [("p_name", ctypes.c_char_p),
                             ("p_aliases", ctypes.POINTER(ctypes.c_char_p)),
                             ("p_proto", ctypes.c_int)]
@@ -724,6 +787,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return local_protocol_name_map
 
     def _protocol_name_map(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not self._iptables_protocol_name_map:
             tmp_map = constants.IPTABLES_PROTOCOL_NAME_MAP.copy()
             tmp_map.update(self._local_protocol_name_map())
@@ -731,11 +795,13 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return self._iptables_protocol_name_map
 
     def _iptables_protocol_name(self, protocol):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # protocol zero is a special case and requires no '-p'
         if protocol and protocol != '0':
             return self._protocol_name_map().get(protocol, protocol)
 
     def _protocol_arg(self, protocol, is_port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         iptables_rule = []
         rule_protocol = self._iptables_protocol_name(protocol)
         # protocol zero is a special case and requires no '-p'
@@ -750,6 +816,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return iptables_rule
 
     def _port_arg(self, direction, protocol, port_range_min, port_range_max):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         args = []
         if port_range_min is None:
             return args
@@ -778,6 +845,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return args
 
     def _ip_prefix_arg(self, direction, ip_prefix):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # NOTE (nati) : source_group_id is converted to list of source_
         # ip_prefix in server side
         if ip_prefix:
@@ -792,10 +860,12 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return []
 
     def _port_chain_name(self, port, direction):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return iptables_manager.get_chain_name(
             '%s%s' % (CHAIN_NAME_PREFIX[direction], port['device'][3:]))
 
     def filter_defer_apply_on(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not self._defer_apply:
             self.iptables.defer_apply_on()
             self._pre_defer_filtered_ports = dict(self.filtered_ports)
@@ -805,6 +875,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             self._defer_apply = True
 
     def _remove_unused_security_group_info(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Remove any unnecessary local security group info or unused ipsets.
 
         This function has to be called after applying the last iptables
@@ -828,6 +899,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             self.sg_rules.pop(remove_group_id, None)
 
     def _determine_remote_sgs_to_remove(self, filtered_ports):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Calculate which remote security groups we don't need anymore.
 
         We do the calculation for each ip_version.
@@ -842,6 +914,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return sgs_to_remove_per_ipversion
 
     def _get_remote_sg_ids_sets_by_ipversion(self, filtered_ports):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Given a port, calculates the remote sg references by ip_version."""
         remote_group_id_sets = {constants.IPv4: set(),
                                 constants.IPv6: set()}
@@ -852,6 +925,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return remote_group_id_sets
 
     def _determine_sg_rules_to_remove(self, filtered_ports):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Calculate which security groups need to be removed.
 
         We find out by subtracting our previous sg group ids,
@@ -861,6 +935,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return set(self.pre_sg_rules) - port_group_ids
 
     def _get_sg_ids_set_for_ports(self, filtered_ports):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Get the port security group ids as a set."""
         port_group_ids = set()
         for port in filtered_ports:
@@ -868,11 +943,13 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return port_group_ids
 
     def _remove_ipsets_for_remote_sgs(self, ip_version, remote_sg_ids):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Remove system ipsets matching the provided parameters."""
         for remote_sg_id in remote_sg_ids:
             self.ipset.destroy(remote_sg_id, ip_version)
 
     def _remove_sg_members(self, remote_sgs_to_remove):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Remove sg_member entries."""
         ipv4_sec_group_set = remote_sgs_to_remove.get(constants.IPv4)
         ipv6_sec_group_set = remote_sgs_to_remove.get(constants.IPv6)
@@ -881,6 +958,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                 del self.sg_members[sg_id]
 
     def _find_deleted_sg_rules(self, sg_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         del_rules = list()
         for pre_rule in self.pre_sg_rules.get(sg_id, []):
             if pre_rule not in self.sg_rules.get(sg_id, []):
@@ -888,6 +966,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return del_rules
 
     def _find_devices_on_security_group(self, sg_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         device_list = list()
         for device in self.filtered_ports.values():
             if sg_id in device.get('security_groups', []):
@@ -895,6 +974,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return device_list
 
     def _clean_deleted_sg_rule_conntrack_entries(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         deleted_sg_ids = set()
         for sg_id in set(self.updated_rule_sg_ids):
             del_rules = self._find_deleted_sg_rules(sg_id)
@@ -909,6 +989,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             self.updated_rule_sg_ids.remove(id)
 
     def _clean_updated_sg_member_conntrack_entries(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         updated_device_ids = set()
         for device in set(self.updated_sg_members):
             sec_group_change = False
@@ -930,6 +1011,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             self.updated_sg_members.remove(id)
 
     def _clean_deleted_remote_sg_members_conntrack_entries(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         deleted_sg_ids = set()
         for sg_id, devices in self.devices_with_updated_sg_members.items():
             for ethertype in [constants.IPv4, constants.IPv6]:
@@ -946,15 +1028,18 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             self.devices_with_updated_sg_members.pop(id, None)
 
     def _remove_conntrack_entries_from_sg_updates(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self._clean_deleted_sg_rule_conntrack_entries()
         self._clean_updated_sg_member_conntrack_entries()
         if not self.enable_ipset:
             self._clean_deleted_remote_sg_members_conntrack_entries()
 
     def _get_sg_members(self, sg_info, sg_id, ethertype):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return set(sg_info.get(sg_id, {}).get(ethertype, []))
 
     def filter_defer_apply_off(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if self._defer_apply:
             self._defer_apply = False
             self._remove_chains_apply(self._pre_defer_filtered_ports,
@@ -969,17 +1054,21 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
 
 class OVSHybridIptablesFirewallDriver(IptablesFirewallDriver):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     OVS_HYBRID_PLUG_REQUIRED = True
     CONNTRACK_ZONE_PER_PORT = True
 
     def _port_chain_name(self, port, direction):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return iptables_manager.get_chain_name(
             '%s%s' % (CHAIN_NAME_PREFIX[direction], port['device']))
 
     def _get_br_device_name(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return ('qvb' + port['device'])[:constants.LINUX_DEV_LEN]
 
     def _get_device_name(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         device_name = super(
             OVSHybridIptablesFirewallDriver, self)._get_device_name(port)
         return get_hybrid_port_name(device_name)

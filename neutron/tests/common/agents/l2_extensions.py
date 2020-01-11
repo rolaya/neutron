@@ -21,15 +21,18 @@ from oslo_log import log as logging
 from neutron.agent.common import async_process
 from neutron.agent.linux import iptables_manager
 from neutron.common import utils as common_utils
+from neutron.common import log_utils
 
 LOG = logging.getLogger(__name__)
 
 
 class TcpdumpException(Exception):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     pass
 
 
 def extract_mod_nw_tos_action(flows):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     tos_mark = None
     if flows:
         flow_list = flows.splitlines()
@@ -42,6 +45,7 @@ def extract_mod_nw_tos_action(flows):
 
 
 def extract_dscp_value_from_iptables_rules(rules):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     pattern = (r"^-A neutron-linuxbri-qos-.* -j DSCP "
                "--set-dscp (?P<dscp_value>0x[A-Fa-f0-9]+)$")
     for rule in rules:
@@ -51,6 +55,7 @@ def extract_dscp_value_from_iptables_rules(rules):
 
 
 def wait_until_bandwidth_limit_rule_applied(check_function, port_vif, rule):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     def _bandwidth_limit_rule_applied():
         bw_rule = check_function(port_vif)
         expected = None, None
@@ -62,16 +67,19 @@ def wait_until_bandwidth_limit_rule_applied(check_function, port_vif, rule):
 
 
 def wait_until_egress_bandwidth_limit_rule_applied(bridge, port_vif, rule):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     wait_until_bandwidth_limit_rule_applied(
         bridge.get_egress_bw_limit_for_port, port_vif, rule)
 
 
 def wait_until_ingress_bandwidth_limit_rule_applied(bridge, port_vif, rule):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     wait_until_bandwidth_limit_rule_applied(
         bridge.get_ingress_bw_limit_for_port, port_vif, rule)
 
 
 def wait_until_dscp_marking_rule_applied_ovs(bridge, port_vif, rule):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     def _dscp_marking_rule_applied():
         port_num = bridge.get_port_ofport(port_vif)
 
@@ -89,10 +97,12 @@ def wait_until_dscp_marking_rule_applied_ovs(bridge, port_vif, rule):
 def wait_until_dscp_marking_rule_applied_linuxbridge(namespace, port_vif,
                                                      expected_rule):
 
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     iptables = iptables_manager.IptablesManager(
         namespace=namespace)
 
     def _dscp_marking_rule_applied():
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         mangle_rules = iptables.get_rules_for_table("mangle")
         dscp_mark = extract_dscp_value_from_iptables_rules(mangle_rules)
         return dscp_mark == expected_rule
@@ -101,6 +111,7 @@ def wait_until_dscp_marking_rule_applied_linuxbridge(namespace, port_vif,
 
 
 def wait_for_dscp_marked_packet(sender_vm, receiver_vm, dscp_mark):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     cmd = [
         "tcpdump", "-i", receiver_vm.port.name, "-nlt",
         "src", sender_vm.ip, 'and', 'dst', receiver_vm.ip]

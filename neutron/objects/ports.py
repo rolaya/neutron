@@ -28,11 +28,13 @@ from neutron.objects import base
 from neutron.objects.db import api as obj_db_api
 from neutron.objects.qos import binding
 from neutron.plugins.ml2 import models as ml2_models
+from neutron.common import log_utils
 
 LOG = logging.getLogger(__name__)
 
 
 class PortBindingBase(base.NeutronDbObject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     foreign_keys = {
         'Port': {'port_id': 'id'},
@@ -40,6 +42,7 @@ class PortBindingBase(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_to_db(cls, fields):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         result = super(PortBindingBase, cls).modify_fields_to_db(fields)
         for field in ['profile', 'vif_details']:
             if field in result:
@@ -50,6 +53,7 @@ class PortBindingBase(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         fields = super(PortBindingBase, cls).modify_fields_from_db(db_obj)
         if 'vif_details' in fields:
             # load string from DB into dict, set None if vif_details is ''
@@ -64,6 +68,7 @@ class PortBindingBase(base.NeutronDbObject):
 
 @base.NeutronObjectRegistry.register
 class PortBinding(PortBindingBase):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version
     VERSION = '1.0'
 
@@ -85,6 +90,7 @@ class PortBinding(PortBindingBase):
 
 @base.NeutronObjectRegistry.register
 class DistributedPortBinding(PortBindingBase):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version
     VERSION = '1.0'
 
@@ -109,6 +115,7 @@ class DistributedPortBinding(PortBindingBase):
 
 @base.NeutronObjectRegistry.register
 class PortBindingLevel(base.NeutronDbObject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version
     # Version 1.1: Added segment_id
     VERSION = '1.1'
@@ -139,6 +146,7 @@ class PortBindingLevel(base.NeutronDbObject):
     @classmethod
     def get_objects(cls, context, _pager=None, validate_filters=True,
                     **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not _pager:
             _pager = base.Pager()
         if not _pager.sorts:
@@ -148,6 +156,7 @@ class PortBindingLevel(base.NeutronDbObject):
             context, _pager, validate_filters, **kwargs)
 
     def obj_make_compatible(self, primitive, target_version):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         _target_version = versionutils.convert_version_to_tuple(target_version)
         if _target_version < (1, 1):
             primitive.pop('segment_id', None)
@@ -155,6 +164,7 @@ class PortBindingLevel(base.NeutronDbObject):
 
 @base.NeutronObjectRegistry.register
 class IPAllocation(base.NeutronDbObject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version
     VERSION = '1.0'
 
@@ -179,6 +189,7 @@ class IPAllocation(base.NeutronDbObject):
     # custom types.
     @classmethod
     def modify_fields_to_db(cls, fields):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         result = super(IPAllocation, cls).modify_fields_to_db(fields)
         if 'ip_address' in result:
             result['ip_address'] = cls.filter_to_str(result['ip_address'])
@@ -188,6 +199,7 @@ class IPAllocation(base.NeutronDbObject):
     # custom types.
     @classmethod
     def modify_fields_from_db(cls, db_obj):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         fields = super(IPAllocation, cls).modify_fields_from_db(db_obj)
         if 'ip_address' in fields:
             fields['ip_address'] = netaddr.IPAddress(fields['ip_address'])
@@ -196,6 +208,7 @@ class IPAllocation(base.NeutronDbObject):
     @classmethod
     def get_alloc_by_subnet_id(cls, context, subnet_id, device_owner,
                                exclude=True):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # need to join with ports table as IPAllocation's port
         # is not joined eagerly and thus producing query which yields
         # incorrect results
@@ -217,6 +230,7 @@ class IPAllocation(base.NeutronDbObject):
 
 @base.NeutronObjectRegistry.register
 class PortDNS(base.NeutronDbObject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version
     # Version 1.1: Add dns_domain attribute
     VERSION = '1.1'
@@ -240,6 +254,7 @@ class PortDNS(base.NeutronDbObject):
     }
 
     def obj_make_compatible(self, primitive, target_version):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         _target_version = versionutils.convert_version_to_tuple(target_version)
         if _target_version < (1, 1):
             primitive.pop('dns_domain', None)
@@ -247,6 +262,7 @@ class PortDNS(base.NeutronDbObject):
 
 @base.NeutronObjectRegistry.register
 class SecurityGroupPortBinding(base.NeutronDbObject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -263,6 +279,7 @@ class SecurityGroupPortBinding(base.NeutronDbObject):
 
 @base.NeutronObjectRegistry.register
 class Port(base.NeutronDbObject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version
     # Version 1.1: Add data_plane_status field
     # Version 1.2: Added segment_id to binding_levels
@@ -351,6 +368,7 @@ class Port(base.NeutronDbObject):
     }
 
     def create(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         fields = self.obj_get_changes()
         with self.db_context_writer(self.obj_context):
             sg_ids = self.security_group_ids
@@ -364,6 +382,7 @@ class Port(base.NeutronDbObject):
                 self._attach_qos_policy(qos_policy_id)
 
     def update(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         fields = self.obj_get_changes()
         with self.db_context_writer(self.obj_context):
             super(Port, self).update()
@@ -373,6 +392,7 @@ class Port(base.NeutronDbObject):
                 self._attach_qos_policy(fields['qos_policy_id'])
 
     def _attach_qos_policy(self, qos_policy_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         binding.QosPolicyPortBinding.delete_objects(
             self.obj_context, port_id=self.id)
         if qos_policy_id:
@@ -384,6 +404,7 @@ class Port(base.NeutronDbObject):
         self.obj_reset_changes(['qos_policy_id'])
 
     def _attach_security_groups(self, sg_ids):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # TODO(ihrachys): consider introducing an (internal) object for the
         # binding to decouple database operations a bit more
         obj_db_api.delete_objects(
@@ -395,6 +416,7 @@ class Port(base.NeutronDbObject):
         self.obj_reset_changes(['security_group_ids'])
 
     def _attach_security_group(self, sg_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         obj_db_api.create_object(
             SecurityGroupPortBinding, self.obj_context,
             {'port_id': self.id, 'security_group_id': sg_id}
@@ -403,6 +425,7 @@ class Port(base.NeutronDbObject):
     @classmethod
     def get_objects(cls, context, _pager=None, validate_filters=True,
                     security_group_ids=None, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if security_group_ids:
             ports_with_sg = cls.get_ports_ids_by_security_groups(
                 context, security_group_ids)
@@ -416,6 +439,7 @@ class Port(base.NeutronDbObject):
 
     @classmethod
     def get_port_ids_filter_by_segment_id(cls, context, segment_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         query = context.session.query(models_v2.Port.id)
         query = query.join(
             ml2_models.PortBindingLevel,
@@ -426,6 +450,7 @@ class Port(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_to_db(cls, fields):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         result = super(Port, cls).modify_fields_to_db(fields)
 
         # TODO(rossella_s): get rid of it once we switch the db model to using
@@ -442,6 +467,7 @@ class Port(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         fields = super(Port, cls).modify_fields_from_db(db_obj)
 
         # TODO(rossella_s): get rid of it once we switch the db model to using
@@ -459,6 +485,7 @@ class Port(base.NeutronDbObject):
         return fields
 
     def from_db_object(self, db_obj):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         super(Port, self).from_db_object(db_obj)
         # extract security group bindings
         if db_obj.get('security_groups', []):
@@ -482,6 +509,7 @@ class Port(base.NeutronDbObject):
         self.obj_reset_changes(fields_to_change)
 
     def obj_make_compatible(self, primitive, target_version):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         _target_version = versionutils.convert_version_to_tuple(target_version)
         if _target_version < (1, 1):
             primitive.pop('data_plane_status', None)
@@ -513,6 +541,7 @@ class Port(base.NeutronDbObject):
     @classmethod
     def get_ports_by_router_and_network(cls, context, router_id, owner,
                                         network_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Returns port objects filtering by router ID, owner and network ID"""
         rports_filter = (models_v2.Port.network_id == network_id, )
         router_filter = (models_v2.Port.network_id == network_id, )
@@ -521,6 +550,7 @@ class Port(base.NeutronDbObject):
 
     @classmethod
     def get_ports_by_router_and_port(cls, context, router_id, owner, port_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Returns port objects filtering by router ID, owner and port ID"""
         rports_filter = (l3.RouterPort.port_id == port_id, )
         router_filter = (models_v2.Port.id == port_id, )
@@ -530,6 +560,7 @@ class Port(base.NeutronDbObject):
     @classmethod
     def _get_ports_by_router(cls, context, router_id, owner, rports_filter,
                              router_filter):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Returns port objects filtering by router id and owner
 
         The method will receive extra filters depending of the caller (filter
@@ -574,6 +605,7 @@ class Port(base.NeutronDbObject):
     @classmethod
     def get_ports_ids_by_security_groups(cls, context, security_group_ids,
                                          excluded_device_owners=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         query = context.session.query(sg_models.SecurityGroupPortBinding)
         query = query.filter(
             sg_models.SecurityGroupPortBinding.security_group_id.in_(
@@ -587,6 +619,7 @@ class Port(base.NeutronDbObject):
     @classmethod
     def get_ports_by_binding_type_and_host(cls, context,
                                            binding_type, host):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         query = context.session.query(models_v2.Port).join(
             ml2_models.PortBinding)
         query = query.filter(
@@ -597,6 +630,7 @@ class Port(base.NeutronDbObject):
     @classmethod
     def get_ports_by_vnic_type_and_host(
             cls, context, vnic_type, host):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         query = context.session.query(models_v2.Port).join(
             ml2_models.PortBinding)
         query = query.filter(
@@ -607,6 +641,7 @@ class Port(base.NeutronDbObject):
     @classmethod
     def check_network_ports_by_binding_types(
             cls, context, network_id, binding_types, negative_search=False):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """This method is to check whether networks have ports with given
         binding_types.
 

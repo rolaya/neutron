@@ -24,7 +24,7 @@ from neutron.api.rpc.callbacks.producer import registry as rpc_registry
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.objects.qos import policy as policy_object
-
+from neutron.common import log_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -36,8 +36,10 @@ SKIPPED_VIF_TYPES = [
 
 
 class QosServiceDriverManager(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def __init__(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self._drivers = []
         self.rpc_notifications_required = False
         rpc_registry.provide(self._get_qos_policy_cb, resources.QOS_POLICY)
@@ -51,6 +53,7 @@ class QosServiceDriverManager(object):
 
     @staticmethod
     def _get_qos_policy_cb(resource, policy_id, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         context = kwargs.get('context')
         if context is None:
             LOG.warning(
@@ -63,6 +66,7 @@ class QosServiceDriverManager(object):
 
     @staticmethod
     def _validate_vnic_type(driver, vnic_type, port_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if driver.is_vnic_compatible(vnic_type):
             return True
         LOG.debug("vnic_type %(vnic_type)s of port %(port_id)s "
@@ -74,6 +78,7 @@ class QosServiceDriverManager(object):
 
     @staticmethod
     def _validate_vif_type(driver, vif_type, port_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if driver.is_vif_type_compatible(vif_type):
             return True
         LOG.debug("vif_type %(vif_type)s of port %(port_id)s "
@@ -85,6 +90,7 @@ class QosServiceDriverManager(object):
 
     @staticmethod
     def _parse_parameter_values(parameter_values):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         validator, possible_values = list(parameter_values.items())[0]
         if validator == 'type:range':
             parameter_values = {
@@ -98,6 +104,7 @@ class QosServiceDriverManager(object):
         return parameter_values, parameter_type
 
     def call(self, method_name, *args, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Helper method for calling a method across all extension drivers."""
         exc_list = []
         for driver in self._drivers:
@@ -127,6 +134,7 @@ class QosServiceDriverManager(object):
                 self.push_api.push(context, [policy_obj], rpc_events.DELETED)
 
     def register_driver(self, driver):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Register driver with qos plugin.
 
         This method is called from drivers on INIT event.
@@ -135,6 +143,7 @@ class QosServiceDriverManager(object):
         self.rpc_notifications_required |= driver.requires_rpc_notifications
 
     def validate_rule_for_port(self, rule, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         port_binding = utils.get_port_binding_by_status_and_host(
             port.bindings, lib_constants.ACTIVE, raise_if_not_found=True,
             port_id=port['id'])
@@ -155,6 +164,7 @@ class QosServiceDriverManager(object):
 
     @property
     def supported_rule_types(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not self._drivers:
             return []
 
@@ -177,6 +187,7 @@ class QosServiceDriverManager(object):
         return rule_types
 
     def supported_rule_type_details(self, rule_type_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not self._drivers:
             return []
 

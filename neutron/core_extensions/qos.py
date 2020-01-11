@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log
 from neutron_lib.db import api as db_api
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.plugins import constants as plugin_constants
@@ -21,18 +22,24 @@ from neutron_lib.services.qos import constants as qos_consts
 
 from neutron.core_extensions import base
 from neutron.objects.qos import policy as policy_object
+from neutron.common import log_utils
+
+LOG = log.getLogger(__name__)
 
 
 class QosCoreResourceExtension(base.CoreResourceExtension):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     @property
     def plugin_loaded(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not hasattr(self, '_plugin_loaded'):
             self._plugin_loaded = (
                 plugin_constants.QOS in directory.get_plugins())
         return self._plugin_loaded
 
     def _check_policy_change_permission(self, context, old_policy):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """An existing policy can be modified only if one of the following is
         true:
 
@@ -46,6 +53,7 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
                 policy_id=old_policy.id)
 
     def _update_port_policy(self, context, port, port_changes):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         old_policy = policy_object.QosPolicy.get_port_policy(
             context.elevated(), port['id'])
         if old_policy:
@@ -60,6 +68,7 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
         port[qos_consts.QOS_POLICY_ID] = qos_policy_id
 
     def _create_network_policy(self, context, network, network_changes):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         qos_policy_id = network_changes.get(qos_consts.QOS_POLICY_ID)
         if not qos_policy_id:
             policy_obj = policy_object.QosPolicyDefault.get_object(
@@ -74,6 +83,7 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
         network[qos_consts.QOS_POLICY_ID] = qos_policy_id
 
     def _update_network_policy(self, context, network, network_changes):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         old_policy = policy_object.QosPolicy.get_network_policy(
             context.elevated(), network['id'])
         if old_policy:
@@ -88,11 +98,13 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
         network[qos_consts.QOS_POLICY_ID] = qos_policy_id
 
     def _exec(self, method_name, context, kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         with db_api.CONTEXT_WRITER.using(context):
             return getattr(self, method_name)(context=context, **kwargs)
 
     def process_fields(self, context, resource_type, event_type,
                        requested_resource, actual_resource):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if (qos_consts.QOS_POLICY_ID in requested_resource and
                 self.plugin_loaded):
             method_name = ('_%(event)s_%(resource)s_policy' %
@@ -102,6 +114,7 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
                         "%s_changes" % resource_type: requested_resource})
 
     def extract_fields(self, resource_type, resource):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not self.plugin_loaded:
             return {}
 

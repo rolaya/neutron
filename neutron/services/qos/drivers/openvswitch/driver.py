@@ -19,6 +19,7 @@ from neutron_lib.db import constants as db_consts
 from neutron_lib.services.qos import base
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_log import log as logging
+from neutron.common import log_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -46,9 +47,11 @@ SUPPORTED_RULES = {
 
 
 class OVSDriver(base.DriverBase):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     @staticmethod
     def create():
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return OVSDriver(
             name='openvswitch',
             vif_types=[portbindings.VIF_TYPE_OVS,
@@ -59,6 +62,7 @@ class OVSDriver(base.DriverBase):
 
 
 def register():
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Register the driver."""
     global DRIVER
     if not DRIVER:

@@ -21,6 +21,7 @@ from neutron.api.rpc.callbacks import resources
 from neutron.services.trunk.drivers.openvswitch.agent import ovsdb_handler
 from neutron.services.trunk.drivers.openvswitch.agent import trunk_manager
 from neutron.services.trunk.rpc import agent
+from neutron.common import log_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ TRUNK_SKELETON = None
 
 @local_registry.has_registry_receivers
 class OVSTrunkSkeleton(agent.TrunkSkeleton):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """It processes Neutron Server events to create the physical resources
     associated to a logical trunk in response to user initiated API events
     (such as trunk subport add/remove). It collaborates with the OVSDBHandler
@@ -36,11 +38,13 @@ class OVSTrunkSkeleton(agent.TrunkSkeleton):
     """
 
     def __init__(self, ovsdb_handler):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         super(OVSTrunkSkeleton, self).__init__()
         self.ovsdb_handler = ovsdb_handler
         registry.unsubscribe(self.handle_trunks, resources.TRUNK)
 
     def handle_trunks(self, context, resource_type, trunk, event_type):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """This method is not required by the OVS Agent driver.
 
         Trunk notifications are handled via local OVSDB events.
@@ -48,6 +52,7 @@ class OVSTrunkSkeleton(agent.TrunkSkeleton):
         raise NotImplementedError()
 
     def handle_subports(self, context, resource_type, subports, event_type):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # Subports are always created with the same trunk_id and there is
         # always at least one item in subports list
         trunk_id = subports[0].trunk_id
@@ -76,6 +81,7 @@ class OVSTrunkSkeleton(agent.TrunkSkeleton):
 
     @local_registry.receives(resources.TRUNK, [local_events.BEFORE_CREATE])
     def check_trunk_dependencies(self, resource, event, trigger, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # The OVS trunk driver does not work with iptables firewall and QoS.
         # We should validate the environment configuration and signal that
         # something might be wrong.
@@ -91,6 +97,7 @@ class OVSTrunkSkeleton(agent.TrunkSkeleton):
 
 
 def init_handler(resource, event, trigger, payload=None):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Handler for agent init event."""
     # Set up agent-side RPC for receiving trunk events; we may want to
     # make this setup conditional based on server-side capabilities.

@@ -26,9 +26,10 @@ from neutron.tests.common.exclusive_resources import ip_network
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack.resources import config
 from neutron.tests.fullstack.resources import process
-
+from neutron.common import log_utils
 
 class EnvironmentDescription(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """A set of characteristics of an environment setup.
 
     Does the setup, as a whole, support tunneling? How about l2pop?
@@ -64,10 +65,13 @@ class EnvironmentDescription(object):
 
     @property
     def tunneling_enabled(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
+
         return self.network_type in ('vxlan', 'gre')
 
 
 class HostDescription(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """A set of characteristics of an environment Host.
 
     What agents should the host spawn? What mode should each agent operate
@@ -78,6 +82,7 @@ class HostDescription(object):
                  firewall_driver='noop', availability_zone=None,
                  l3_agent_mode=None,
                  l3_agent_extensions=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.l2_agent_type = l2_agent_type
         self.l3_agent = l3_agent
         self.dhcp_agent = dhcp_agent
@@ -88,6 +93,7 @@ class HostDescription(object):
 
 
 class Host(fixtures.Fixture):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """The Host class models a physical host running agents, all reporting with
     the same hostname.
 
@@ -104,6 +110,7 @@ class Host(fixtures.Fixture):
 
     def __init__(self, env_desc, host_desc, test_name,
                  neutron_config, central_bridge):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.env_desc = env_desc
         self.host_desc = host_desc
         self.test_name = test_name
@@ -116,6 +123,7 @@ class Host(fixtures.Fixture):
         self.network_bridges = {}
 
     def _setUp(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.local_ip = self.allocate_local_ip()
 
         if self.host_desc.l2_agent_type == constants.AGENT_TYPE_OVS:
@@ -142,6 +150,8 @@ class Host(fixtures.Fixture):
                     namespace=self.host_namespace))
 
     def setup_host_with_ovs_agent(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
+        log_utils.log_qos_msg("sfssdfsdf")
         agent_cfg_fixture = config.OVSConfigFixture(
             self.env_desc, self.host_desc, self.neutron_config.temp_dir,
             self.local_ip, test_name=self.test_name)
@@ -178,6 +188,7 @@ class Host(fixtures.Fixture):
                     self.ovs_agent.agent_cfg_fixture.get_br_int_name()))
 
     def setup_host_with_sriov_agent(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         agent_cfg_fixture = config.SRIOVConfigFixture(
             self.env_desc, self.host_desc, self.neutron_config.temp_dir,
             self.local_ip)
@@ -188,6 +199,7 @@ class Host(fixtures.Fixture):
                 self.test_name, self.neutron_config, agent_cfg_fixture))
 
     def setup_host_with_linuxbridge_agent(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # First we need to provide connectivity for agent to prepare proper
         # bridge mappings in agent's config:
         self.host_namespace = self.useFixture(
@@ -225,6 +237,7 @@ class Host(fixtures.Fixture):
                     self.neutron_config.temp_dir))
 
     def _connect_ovs_port(self, cidr_address):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         ovs_device = self.useFixture(
             net_helpers.OVSPortFixture(
                 bridge=self.central_bridge,
@@ -235,12 +248,14 @@ class Host(fixtures.Fixture):
         return ovs_device
 
     def connect_namespace_to_control_network(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.host_port = self._connect_ovs_port(
             common_utils.ip_to_cidr(self.local_ip, 24)
         )
         self.host_port.link.set_up()
 
     def connect_to_central_network_via_tunneling(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         veth_1, veth_2 = self.useFixture(
             net_helpers.VethFixture()).ports
 
@@ -252,12 +267,14 @@ class Host(fixtures.Fixture):
         veth_2.link.set_up()
 
     def connect_to_central_network_via_vlans(self, host_data_bridge):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # If using VLANs as a segmentation device, it's needed to connect
         # a provider bridge to a centralized, shared bridge.
         net_helpers.create_patch_ports(
             self.central_bridge, host_data_bridge)
 
     def allocate_local_ip(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not self.env_desc.network_range:
             return str(self.useFixture(
                 ip_address.ExclusiveIPAddress(
@@ -268,6 +285,7 @@ class Host(fixtures.Fixture):
                 str(self.env_desc.network_range[-2]))).address)
 
     def get_bridge(self, network_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if "ovs" in self.agents.keys():
             return self.ovs_agent.br_int
         elif "linuxbridge" in self.agents.keys():
@@ -285,50 +303,62 @@ class Host(fixtures.Fixture):
 
     @property
     def hostname(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.neutron_config.config.DEFAULT.host
 
     @property
     def l3_agent(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.agents['l3']
 
     @l3_agent.setter
     def l3_agent(self, agent):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.agents['l3'] = agent
 
     @property
     def dhcp_agent(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.agents['dhcp']
 
     @dhcp_agent.setter
     def dhcp_agent(self, agent):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.agents['dhcp'] = agent
 
     @property
     def ovs_agent(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.agents['ovs']
 
     @ovs_agent.setter
     def ovs_agent(self, agent):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.agents['ovs'] = agent
 
     @property
     def sriov_agent(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.agents['sriov']
 
     @sriov_agent.setter
     def sriov_agent(self, agent):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.agents['sriov'] = agent
 
     @property
     def linuxbridge_agent(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.agents['linuxbridge']
 
     @linuxbridge_agent.setter
     def linuxbridge_agent(self, agent):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.agents['linuxbridge'] = agent
 
     @property
     def l2_agent(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if self.host_desc.l2_agent_type == constants.AGENT_TYPE_LINUXBRIDGE:
             return self.linuxbridge_agent
         elif self.host_desc.l2_agent_type == constants.AGENT_TYPE_OVS:
@@ -338,6 +368,7 @@ class Host(fixtures.Fixture):
 
 
 class Environment(fixtures.Fixture):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Represents a deployment topology.
 
     Environment is a collection of hosts. It starts a Neutron server
@@ -347,6 +378,7 @@ class Environment(fixtures.Fixture):
     """
 
     def __init__(self, env_desc, hosts_desc):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Initialize Environment
 
         :param env_desc: An EnvironmentDescription instance.
@@ -359,12 +391,14 @@ class Environment(fixtures.Fixture):
         self.hosts = []
 
     def wait_until_env_is_up(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         common_utils.wait_until_true(
             self._processes_are_ready,
             timeout=180,
             sleep=10)
 
     def _processes_are_ready(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         try:
             running_agents = self.neutron_server.client.list_agents()['agents']
             agents_count = sum(len(host.agents) for host in self.hosts)
@@ -373,6 +407,7 @@ class Environment(fixtures.Fixture):
             return False
 
     def _create_host(self, host_desc):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         temp_dir = self.useFixture(fixtures.TempDir()).path
         neutron_config = config.NeutronConfigFixture(
             self.env_desc, host_desc, temp_dir,
@@ -387,6 +422,7 @@ class Environment(fixtures.Fixture):
                  self.central_bridge))
 
     def _setUp(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.temp_dir = self.useFixture(fixtures.TempDir()).path
 
         # we need this bridge before rabbit and neutron service will start
@@ -428,6 +464,7 @@ class Environment(fixtures.Fixture):
         self.wait_until_env_is_up()
 
     def _configure_port_for_rabbitmq(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.env_desc.network_range = self._get_network_range()
         if not self.env_desc.network_range:
             return "127.0.0.1"
@@ -439,6 +476,7 @@ class Environment(fixtures.Fixture):
         return rabbitmq_ip
 
     def _get_network_range(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # NOTE(slaweq): We need to choose IP address on which rabbitmq will be
         # available because LinuxBridge agents are spawned in their own
         # namespaces and need to know where the rabbitmq server is listening.

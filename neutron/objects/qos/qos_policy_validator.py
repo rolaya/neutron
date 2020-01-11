@@ -13,11 +13,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.services.qos import constants as qos_consts
+from neutron.common import log_utils
 
+LOG = log.getLogger(__name__)
 
 def check_bandwidth_rule_conflict(policy, rule_data):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Implementation of the QoS Rule checker.
 
     This function checks if the new rule to be associated with the policy
@@ -47,6 +51,7 @@ def check_bandwidth_rule_conflict(policy, rule_data):
 
 
 def check_rules_conflict(policy, rule_obj):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Implementation of the QoS Policy rules conflicts.
 
     This function checks if the new rule to be associated with policy

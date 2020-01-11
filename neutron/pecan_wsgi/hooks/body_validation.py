@@ -21,16 +21,17 @@ from neutron._i18n import _
 from neutron.api.v2 import base as v2_base
 from neutron.pecan_wsgi.hooks import utils as wsgi_utils
 from neutron.common import utils
+from neutron.common import log_utils
 from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
 
 class BodyValidationHook(hooks.PecanHook):
-    LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     priority = 120
 
     def before(self, state):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if state.request.method not in ('POST', 'PUT'):
             return
         resource = state.request.context.get('resource')

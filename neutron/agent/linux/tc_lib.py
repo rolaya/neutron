@@ -28,6 +28,7 @@ from pyroute2.netlink.rtnl.tcmsg import common as rtnl_common
 from neutron._i18n import _
 from neutron.agent.linux import ip_lib
 from neutron.common import utils
+from neutron.common import log_utils
 from neutron.privileged.agent.linux import tc_lib as priv_tc_lib
 
 
@@ -74,19 +75,23 @@ VXLAN_VNI_OFFSET = 32
 
 
 class InvalidKernelHzValue(exceptions.NeutronException):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     message = _("Kernel HZ value %(value)s is not valid. This value must be "
                 "greater than 0.")
 
 
 class InvalidUnit(exceptions.NeutronException):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     message = _("Unit name '%(unit)s' is not valid.")
 
 
 class TcLibPolicyClassInvalidMinKbpsValue(exceptions.NeutronException):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     message = _("'min_kbps' is mandatory in a TC class and must be >= 1.")
 
 
 def convert_to_kilobits(value, base):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     value = value.lower()
     if "bit" in value:
         input_in_bits = True
@@ -114,6 +119,7 @@ def convert_to_kilobits(value, base):
 
 
 def _get_attr(pyroute2_obj, attr_name):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Get an attribute in a pyroute object
 
     pyroute2 object attributes are stored under a key called 'attrs'. This key
@@ -133,11 +139,13 @@ def _get_attr(pyroute2_obj, attr_name):
 
 
 def _get_tbf_burst_value(rate, burst_limit, kernel_hz):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     min_burst_value = float(rate) / float(kernel_hz)
     return max(min_burst_value, burst_limit)
 
 
 def _calc_burst(rate, buffer):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Calculate burst rate
 
     :param rate: (int) rate in bytes per second.
@@ -152,6 +160,7 @@ def _calc_burst(rate, buffer):
 
 
 def _calc_latency_ms(limit, burst, rate):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Calculate latency value, in ms
 
     :param limit: (int) pyroute2 limit value
@@ -165,6 +174,7 @@ def _calc_latency_ms(limit, burst, rate):
 
 
 def _handle_from_hex_to_string(handle):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Convert TC handle from hex to string
 
     :param handle: (int) TC handle
@@ -176,6 +186,7 @@ def _handle_from_hex_to_string(handle):
 
 
 def _mac_to_pyroute2_keys(mac, offset):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Convert a MAC address to a list of filter keys
 
     For example:
@@ -207,8 +218,10 @@ def _mac_to_pyroute2_keys(mac, offset):
 
 
 class TcCommand(ip_lib.IPDevice):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def __init__(self, name, kernel_hz, namespace=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if kernel_hz <= 0:
             raise InvalidKernelHzValue(value=kernel_hz)
         super(TcCommand, self).__init__(name, namespace=namespace)
@@ -216,6 +229,7 @@ class TcCommand(ip_lib.IPDevice):
 
     @staticmethod
     def get_ingress_qdisc_burst_value(bw_limit, burst_limit):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Return burst value used in ingress qdisc.
 
         If burst value is not specified given than it will be set to default
@@ -228,12 +242,14 @@ class TcCommand(ip_lib.IPDevice):
     def get_filters_bw_limits(self, qdisc_id=INGRESS_QDISC_ID):
         filters = list_tc_filters(self.name, qdisc_id,
                                   namespace=self.namespace)
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if filters:
             return filters[0].get('rate_kbps'), filters[0].get('burst_kb')
 
         return None, None
 
     def get_tbf_bw_limits(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         qdiscs = list_tc_qdiscs(self.name, namespace=self.namespace)
         if not qdiscs:
             return None, None
@@ -245,6 +261,7 @@ class TcCommand(ip_lib.IPDevice):
         return qdisc['max_kbps'], qdisc['burst_kb']
 
     def set_filters_bw_limit(self, bw_limit, burst_limit):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Set ingress qdisc and filter for police ingress traffic on device
 
         This will allow to police traffic incoming to interface. It
@@ -258,6 +275,7 @@ class TcCommand(ip_lib.IPDevice):
         return self.update_filters_bw_limit(bw_limit, burst_limit)
 
     def set_tbf_bw_limit(self, bw_limit, burst_limit, latency_value):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Set/update token bucket filter qdisc on device
 
         This will allow to limit speed of packets going out from interface. It
@@ -270,11 +288,13 @@ class TcCommand(ip_lib.IPDevice):
                             namespace=self.namespace)
 
     def update_filters_bw_limit(self, bw_limit, burst_limit):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.delete_filters_bw_limit()
         add_tc_qdisc(self.name, 'ingress', namespace=self.namespace)
         return self._add_policy_filter(bw_limit, burst_limit)
 
     def delete_filters_bw_limit(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # NOTE(slaweq): For limit traffic egress from instance we need to use
         # qdisc "ingress" because it is ingress traffic from interface POV:
         delete_tc_qdisc(self.name, is_ingress=True,
@@ -282,12 +302,14 @@ class TcCommand(ip_lib.IPDevice):
                         raise_qdisc_not_found=False, namespace=self.namespace)
 
     def delete_tbf_bw_limit(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         delete_tc_qdisc(self.name, parent='root',
                         raise_interface_not_found=False,
                         raise_qdisc_not_found=False, namespace=self.namespace)
 
     def _add_policy_filter(self, bw_limit, burst_limit,
                            qdisc_id=INGRESS_QDISC_ID):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # NOTE(slaweq): it is made in exactly same way how openvswitch is doing
         # it when configuing ingress traffic limit on port. It can be found in
         # lib/netdev-linux.c#L4698 in openvswitch sources:
@@ -298,6 +320,7 @@ class TcCommand(ip_lib.IPDevice):
 def add_tc_qdisc(device, qdisc_type, parent=None, handle=None, latency_ms=None,
                  max_kbps=None, burst_kb=None, kernel_hz=None,
                  namespace=None):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Add/replace a TC qdisc on a device
 
     pyroute2 input parameters:
@@ -343,6 +366,7 @@ def add_tc_qdisc(device, qdisc_type, parent=None, handle=None, latency_ms=None,
 
 
 def list_tc_qdiscs(device, namespace=None):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """List all TC qdiscs of a device
 
     :param device: (string) device name
@@ -374,6 +398,7 @@ def list_tc_qdiscs(device, namespace=None):
 def delete_tc_qdisc(device, parent=None, is_ingress=False,
                     raise_interface_not_found=True, raise_qdisc_not_found=True,
                     namespace=None):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Delete a TC qdisc of a device
 
     :param device: (string) device name
@@ -396,6 +421,7 @@ def delete_tc_qdisc(device, parent=None, is_ingress=False,
 
 def add_tc_policy_class(device, parent, classid, min_kbps=1, max_kbps=None,
                         burst_kb=None, namespace=None):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Add a TC policy class
 
     :param device: (string) device name
@@ -425,6 +451,7 @@ def add_tc_policy_class(device, parent, classid, min_kbps=1, max_kbps=None,
 
 
 def list_tc_policy_class(device, namespace=None):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """List all TC policy classes of a device
 
     :param device: (string) device name
@@ -432,6 +459,7 @@ def list_tc_policy_class(device, namespace=None):
     :return: (list) TC policy classes
     """
     def get_params(tca_options, qdisc_type):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if qdisc_type not in TC_QDISC_TYPES:
             return None, None, None
 
@@ -472,6 +500,7 @@ def list_tc_policy_class(device, namespace=None):
 
 
 def delete_tc_policy_class(device, parent, classid, namespace=None):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Delete a TC policy class of a device.
 
     :param device: (string) device name
@@ -485,6 +514,7 @@ def delete_tc_policy_class(device, parent, classid, namespace=None):
 
 def add_tc_filter_vxlan(device, parent, classid, src_mac, vxlan_id,
                         namespace=None):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Add a TC filter to match VXLAN traffic based on the VM mac and the VNI.
 
     :param device: (string) device name
@@ -503,6 +533,7 @@ def add_tc_filter_vxlan(device, parent, classid, src_mac, vxlan_id,
 
 def add_tc_filter_match_mac(device, parent, classid, mac, offset=0, priority=0,
                             protocol=None, namespace=None):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Add a TC filter in a device to match a MAC address.
 
     :param device: (string) device name
@@ -525,6 +556,7 @@ def add_tc_filter_match_mac(device, parent, classid, mac, offset=0, priority=0,
 
 def add_tc_filter_policy(device, parent, rate_kbps, burst_kb, mtu, action,
                          priority=0, protocol=None, namespace=None):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Add a TC filter in a device to set a policy.
 
     :param device: (string) device name
@@ -548,6 +580,7 @@ def add_tc_filter_policy(device, parent, rate_kbps, burst_kb, mtu, action,
 
 
 def list_tc_filters(device, parent, namespace=None):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """List TC filter in a device
 
     :param device: (string) device name

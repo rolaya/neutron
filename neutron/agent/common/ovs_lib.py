@@ -32,6 +32,7 @@ import debtcollector
 import six
 import tenacity
 
+from neutron.common import log_utils
 from neutron._i18n import _
 from neutron.agent.common import ip_lib
 from neutron.agent.common import utils
@@ -75,12 +76,14 @@ CTRL_BURST_LIMIT_MIN = 25
 
 
 def _ovsdb_result_pending(result):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Return True if ovsdb indicates the result is still pending."""
     # ovsdb can return '[]' for an ofport that has not yet been assigned
     return result == []
 
 
 def _ovsdb_retry(fn):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Decorator for retrying when OVS has yet to assign an ofport.
 
     The instance's ovsdb_timeout is used as the max waiting time. This relies
@@ -88,6 +91,7 @@ def _ovsdb_retry(fn):
     """
     @six.wraps(fn)
     def wrapped(*args, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self = args[0]
         new_fn = tenacity.retry(
             reraise=True,
@@ -100,7 +104,9 @@ def _ovsdb_retry(fn):
 
 
 class VifPort(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     def __init__(self, port_name, ofport, vif_id, vif_mac, switch):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.port_name = port_name
         self.ofport = ofport
         self.vif_id = vif_id
@@ -108,6 +114,7 @@ class VifPort(object):
         self.switch = switch
 
     def __str__(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return ("iface-id=%s, vif_mac=%s, port_name=%s, ofport=%s, "
                 "bridge_name=%s") % (
                     self.vif_id, self.vif_mac,
@@ -116,12 +123,15 @@ class VifPort(object):
 
 
 class BaseOVS(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def __init__(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.ovsdb_timeout = cfg.CONF.OVS.ovsdb_timeout
         self.ovsdb = impl_idl.api_factory()
 
     def add_manager(self, connection_uri, timeout=_SENTINEL):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Have ovsdb-server listen for manager connections
 
         :param connection_uri: Manager target string
@@ -138,53 +148,66 @@ class BaseOVS(object):
                                       ('inactivity_probe', timeout * 1000)))
 
     def get_manager(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.ovsdb.get_manager().execute()
 
     def remove_manager(self, connection_uri):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.ovsdb.remove_manager(connection_uri).execute()
 
     def add_bridge(self, bridge_name,
                    datapath_type=constants.OVS_DATAPATH_SYSTEM):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         br = OVSBridge(bridge_name, datapath_type=datapath_type)
         br.create()
         return br
 
     def delete_bridge(self, bridge_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.ovsdb.del_br(bridge_name).execute()
 
     def bridge_exists(self, bridge_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.ovsdb.br_exists(bridge_name).execute()
 
     def port_exists(self, port_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         cmd = self.ovsdb.db_get('Port', port_name, 'name')
         return bool(cmd.execute(check_error=False, log_errors=False))
 
     def get_bridge_for_iface(self, iface):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.ovsdb.iface_to_br(iface).execute()
 
     def get_bridges(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.ovsdb.list_br().execute(check_error=True)
 
     def get_bridge_external_bridge_id(self, bridge, check_error=False,
                                       log_errors=True):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.ovsdb.br_get_external_id(bridge, 'bridge-id').execute(
             check_error=check_error, log_errors=log_errors)
 
     def set_db_attribute(self, table_name, record, column, value,
                          check_error=False, log_errors=True):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.ovsdb.db_set(table_name, record, (column, value)).execute(
             check_error=check_error, log_errors=log_errors)
 
     def clear_db_attribute(self, table_name, record, column):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.ovsdb.db_clear(table_name, record, column).execute()
 
     def db_get_val(self, table, record, column, check_error=False,
                    log_errors=True):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.ovsdb.db_get(table, record, column).execute(
             check_error=check_error, log_errors=log_errors)
 
     @property
     def config(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """A dict containing the only row from the root Open_vSwitch table
 
         This row contains several columns describing the Open vSwitch install
@@ -197,6 +220,7 @@ class BaseOVS(object):
 
     @property
     def capabilities(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         _cfg = self.config
         return {k: _cfg.get(k, OVS_DEFAULT_CAPS[k]) for k in OVS_DEFAULT_CAPS}
 
@@ -213,6 +237,7 @@ OF_PROTOCOL_TO_VERSION = {
 
 
 def version_from_protocol(protocol):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     if protocol not in OF_PROTOCOL_TO_VERSION:
         raise Exception(_("unknown OVS protocol string, cannot compare: "
                           "%(protocol)s, (known: %(known)s)") %
@@ -222,7 +247,9 @@ def version_from_protocol(protocol):
 
 
 class OVSBridge(BaseOVS):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     def __init__(self, br_name, datapath_type=constants.OVS_DATAPATH_SYSTEM):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         super(OVSBridge, self).__init__()
         self.br_name = br_name
         self.datapath_type = datapath_type
@@ -232,36 +259,46 @@ class OVSBridge(BaseOVS):
 
     @property
     def default_cookie(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self._default_cookie
 
     def set_agent_uuid_stamp(self, val):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self._default_cookie = val
 
     def set_controller(self, controllers):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.ovsdb.set_controller(self.br_name,
                                   controllers).execute(check_error=True)
 
     def del_controller(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.ovsdb.del_controller(self.br_name).execute(check_error=True)
 
     def get_controller(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.ovsdb.get_controller(self.br_name).execute(
             check_error=True)
 
     def _set_bridge_fail_mode(self, mode):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.ovsdb.set_fail_mode(self.br_name, mode).execute(check_error=True)
 
     def set_secure_mode(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self._set_bridge_fail_mode(FAILMODE_SECURE)
 
     def set_standalone_mode(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self._set_bridge_fail_mode(FAILMODE_STANDALONE)
 
     def add_protocols(self, *protocols):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.ovsdb.db_add('Bridge', self.br_name,
                           'protocols', *protocols).execute(check_error=True)
 
     def use_at_least_protocol(self, protocol):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Calls to ovs-ofctl will use a protocol version >= 'protocol'"""
         self.add_protocols(protocol)
         self._highest_protocol_needed = max(self._highest_protocol_needed,
@@ -269,6 +306,7 @@ class OVSBridge(BaseOVS):
                                             key=version_from_protocol)
 
     def set_igmp_snooping_state(self, state):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         state = bool(state)
         other_config = {
             'mcast-snooping-disable-flood-unregistered': str(state)}
@@ -281,6 +319,7 @@ class OVSBridge(BaseOVS):
                                   ('other_config', other_config)))
 
     def create(self, secure_mode=False):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         other_config = {
             'mac-table-size': str(cfg.CONF.OVS.bridge_mac_table_size)}
         with self.ovsdb.transaction() as txn:
@@ -302,9 +341,11 @@ class OVSBridge(BaseOVS):
                                                  FAILMODE_SECURE))
 
     def destroy(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.delete_bridge(self.br_name)
 
     def add_port(self, port_name, *interface_attr_tuples):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         with self.ovsdb.transaction() as txn:
             txn.add(self.ovsdb.add_port(self.br_name, port_name))
             if interface_attr_tuples:
@@ -313,6 +354,7 @@ class OVSBridge(BaseOVS):
         return self.get_port_ofport(port_name)
 
     def replace_port(self, port_name, *interface_attr_tuples):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Replace existing port or create it, and configure port interface."""
 
         # NOTE(xiaohhui): If del_port is inside the transaction, there will
@@ -340,9 +382,11 @@ class OVSBridge(BaseOVS):
                                           *interface_attr_tuples))
 
     def delete_port(self, port_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.ovsdb.del_port(port_name, self.br_name).execute()
 
     def run_ofctl(self, cmd, args, process_input=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         debtcollector.deprecate("Use of run_ofctl is "
             "deprecated", removal_version='V')
         full_args = ["ovs-ofctl", cmd,
@@ -368,17 +412,21 @@ class OVSBridge(BaseOVS):
                 break
 
     def count_flows(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         flow_list = self.run_ofctl("dump-flows", []).split("\n")[1:]
         return len(flow_list) - 1
 
     def remove_all_flows(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.run_ofctl("del-flows", [])
 
     @_ovsdb_retry
     def _get_port_val(self, port_name, port_val):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.db_get_val("Interface", port_name, port_val)
 
     def get_port_ofport(self, port_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Get the port's assigned ofport, retrying if not yet assigned."""
         ofport = INVALID_OFPORT
         try:
@@ -390,9 +438,11 @@ class OVSBridge(BaseOVS):
 
     @_ovsdb_retry
     def _get_datapath_id(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.db_get_val('Bridge', self.br_name, 'datapath_id')
 
     def get_datapath_id(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         try:
             return self._get_datapath_id()
         except tenacity.RetryError:
@@ -403,6 +453,7 @@ class OVSBridge(BaseOVS):
             raise RuntimeError(_('No datapath_id on bridge %s') % self.br_name)
 
     def do_action_flows(self, action, kwargs_list, use_bundle=False):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # we can't mix strict and non-strict, so we'll use the first kw
         # and check against other kw being different
         strict = kwargs_list[0].get('strict', False)
@@ -455,18 +506,23 @@ class OVSBridge(BaseOVS):
                                '\n'.join(flow_strs[i:i + step]))
 
     def add_flow(self, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.do_action_flows('add', [kwargs])
 
     def mod_flow(self, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.do_action_flows('mod', [kwargs])
 
     def delete_flows(self, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.do_action_flows('del', [kwargs])
 
     def dump_flows_for_table(self, table):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.dump_flows_for(table=table)
 
     def dump_flows_for(self, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         retval = None
         if "cookie" in kwargs:
             kwargs["cookie"] = check_cookie_mask(str(kwargs["cookie"]))
@@ -480,10 +536,12 @@ class OVSBridge(BaseOVS):
         return retval
 
     def dump_all_flows(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return [f for f in self.run_ofctl("dump-flows", []).splitlines()
                 if is_a_flow_line(f)]
 
     def deferred(self, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return DeferredOVSBridge(self, **kwargs)
 
     def add_tunnel_port(self, port_name, remote_ip, local_ip,
@@ -492,6 +550,7 @@ class OVSBridge(BaseOVS):
                         dont_fragment=True,
                         tunnel_csum=False,
                         tos=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         attrs = [('type', tunnel_type)]
         # TODO(twilson) This is an OrderedDict solely to make a test happy
         options = collections.OrderedDict()
@@ -516,24 +575,29 @@ class OVSBridge(BaseOVS):
         return self.add_port(port_name, *attrs)
 
     def add_patch_port(self, local_name, remote_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         attrs = [('type', 'patch'),
                  ('options', {'peer': remote_name})]
         return self.add_port(local_name, *attrs)
 
     def get_iface_name_list(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # get the interface name list for this bridge
         return self.ovsdb.list_ifaces(self.br_name).execute(check_error=True)
 
     def get_port_name_list(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # get the port name list for this bridge
         return self.ovsdb.list_ports(self.br_name).execute(check_error=True)
 
     def get_port_stats(self, port_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.db_get_val("Interface", port_name, "statistics")
 
     def get_ports_attributes(self, table, columns=None, ports=None,
                              check_error=True, log_errors=True,
                              if_exists=False):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         port_names = ports or self.get_port_name_list()
         if not port_names:
             return []
@@ -543,6 +607,7 @@ class OVSBridge(BaseOVS):
 
     # returns a VIF object for each VIF port
     def get_vif_ports(self, ofport_filter=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         edge_ports = []
         port_info = self.get_ports_attributes(
             'Interface', columns=['name', 'external_ids', 'ofport'],
@@ -561,6 +626,7 @@ class OVSBridge(BaseOVS):
         return edge_ports
 
     def get_vif_port_to_ofport_map(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         results = self.get_ports_attributes(
             'Interface', columns=['name', 'external_ids', 'ofport'],
             if_exists=True)
@@ -576,6 +642,7 @@ class OVSBridge(BaseOVS):
         return port_map
 
     def get_vif_port_set(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         edge_ports = set()
         results = self.get_ports_attributes(
             'Interface', columns=['name', 'external_ids', 'ofport'],
@@ -594,10 +661,12 @@ class OVSBridge(BaseOVS):
         return edge_ports
 
     def portid_from_external_ids(self, external_ids):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if 'iface-id' in external_ids:
             return external_ids['iface-id']
 
     def get_port_tag_dict(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Get a dict of port names and associated vlan tags.
 
         e.g. the returned dict is of the following form::
@@ -617,6 +686,7 @@ class OVSBridge(BaseOVS):
         return {p['name']: p['tag'] for p in results}
 
     def get_vifs_by_ids(self, port_ids):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         interface_info = self.get_ports_attributes(
             "Interface", columns=["name", "external_ids", "ofport"],
             if_exists=True)
@@ -639,6 +709,7 @@ class OVSBridge(BaseOVS):
 
     @staticmethod
     def _check_ofport(port_id, port_info):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if port_info['ofport'] in [UNASSIGNED_OFPORT, INVALID_OFPORT]:
             LOG.warning("ofport: %(ofport)s for VIF: %(vif)s "
                         "is not a positive integer",
@@ -647,6 +718,7 @@ class OVSBridge(BaseOVS):
         return True
 
     def get_vif_port_by_id(self, port_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         ports = self.ovsdb.db_find(
             'Interface', ('external_ids', '=', {'iface-id': port_id}),
             ('external_ids', '!=', {'attached-mac': ''}),
@@ -662,6 +734,7 @@ class OVSBridge(BaseOVS):
                  {'port_id': port_id, 'br_name': self.br_name})
 
     def delete_ports(self, all_ports=False):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if all_ports:
             port_names = self.get_port_name_list()
         else:
@@ -671,6 +744,7 @@ class OVSBridge(BaseOVS):
             self.delete_port(port_name)
 
     def get_local_port_mac(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Retrieve the mac of the bridge's local port."""
         address = ip_lib.IPDevice(self.br_name).link.address
         if address:
@@ -680,6 +754,7 @@ class OVSBridge(BaseOVS):
             raise Exception(msg)
 
     def set_controllers_connection_mode(self, connection_mode):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Set bridge controllers connection mode.
 
         :param connection_mode: "out-of-band" or "in-band"
@@ -687,6 +762,7 @@ class OVSBridge(BaseOVS):
         self.set_controller_field('connection_mode', connection_mode)
 
     def set_controllers_inactivity_probe(self, interval):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Set bridge controllers inactivity probe interval.
 
         :param interval: inactivity_probe value in seconds.
@@ -695,6 +771,7 @@ class OVSBridge(BaseOVS):
 
     def _set_egress_bw_limit_for_port(self, port_name, max_kbps,
                                       max_burst_kbps):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         with self.ovsdb.transaction(check_error=True) as txn:
             txn.add(self.ovsdb.db_set('Interface', port_name,
                                       ('ingress_policing_rate', max_kbps)))
@@ -704,10 +781,12 @@ class OVSBridge(BaseOVS):
 
     def create_egress_bw_limit_for_port(self, port_name, max_kbps,
                                         max_burst_kbps):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self._set_egress_bw_limit_for_port(
             port_name, max_kbps, max_burst_kbps)
 
     def get_egress_bw_limit_for_port(self, port_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
         max_kbps = self.db_get_val('Interface', port_name,
                                    'ingress_policing_rate')
@@ -720,12 +799,14 @@ class OVSBridge(BaseOVS):
         return max_kbps, max_burst_kbps
 
     def delete_egress_bw_limit_for_port(self, port_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not self.port_exists(port_name):
             return
         self._set_egress_bw_limit_for_port(
             port_name, 0, 0)
 
     def find_qos(self, port_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         qos = self.ovsdb.db_find(
             'QoS',
             ('external_ids', '=', {'id': port_name}),
@@ -734,6 +815,7 @@ class OVSBridge(BaseOVS):
             return qos[0]
 
     def find_queue(self, port_name, queue_type):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         queues = self.ovsdb.db_find(
             'Queue',
             ('external_ids', '=', {'id': port_name,
@@ -744,6 +826,7 @@ class OVSBridge(BaseOVS):
 
     def _update_bw_limit_queue(self, txn, port_name, queue_uuid, queue_type,
                                other_config):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if queue_uuid:
             txn.add(self.ovsdb.db_set(
                 'Queue', queue_uuid,
@@ -759,6 +842,7 @@ class OVSBridge(BaseOVS):
 
     def _update_bw_limit_profile(self, txn, port_name, qos_uuid,
                                  queue_uuid, queue_type, qos_other_config):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         queues = {queue_type: queue_uuid}
         if qos_uuid:
             txn.add(self.ovsdb.db_set(
@@ -777,6 +861,7 @@ class OVSBridge(BaseOVS):
 
     def _update_bw_limit_profile_dpdk(self, txn, port_name, qos_uuid,
                                       other_config):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if qos_uuid:
             txn.add(self.ovsdb.db_set(
                 'QoS', qos_uuid, ('other_config', other_config)))
@@ -790,6 +875,7 @@ class OVSBridge(BaseOVS):
 
     def _update_ingress_bw_limit_for_port(
             self, port_name, max_bw_in_bits, max_burst_in_bits):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         qos_other_config = {
             'max-rate': str(max_bw_in_bits)
         }
@@ -817,6 +903,7 @@ class OVSBridge(BaseOVS):
 
     def _update_ingress_bw_limit_for_dpdk_port(
             self, port_name, max_bw_in_bits, max_burst_in_bits):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # cir and cbs should be set in bytes instead of bits
         qos_other_config = {
             'cir': str(max_bw_in_bits / 8),
@@ -832,6 +919,7 @@ class OVSBridge(BaseOVS):
 
     def update_ingress_bw_limit_for_port(self, port_name, max_kbps,
                                          max_burst_kbps):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         max_bw_in_bits = max_kbps * p_const.SI_BASE
         max_burst_in_bits = max_burst_kbps * p_const.SI_BASE
         port_type = self._get_port_val(port_name, "type")
@@ -843,6 +931,7 @@ class OVSBridge(BaseOVS):
                 port_name, max_bw_in_bits, max_burst_in_bits)
 
     def get_ingress_bw_limit_for_port(self, port_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         max_kbps = None
         qos_max_kbps = None
         queue_max_kbps = None
@@ -876,6 +965,7 @@ class OVSBridge(BaseOVS):
         return max_kbps, max_burst_kbit
 
     def get_ingress_bw_limit_for_dpdk_port(self, port_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         max_kbps = None
         max_burst_kbit = None
         res = self.find_qos(port_name)
@@ -894,6 +984,7 @@ class OVSBridge(BaseOVS):
         return max_kbps, max_burst_kbit
 
     def delete_ingress_bw_limit_for_port(self, port_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         qos = self.find_qos(port_name)
         queue = self.find_queue(port_name, QOS_DEFAULT_QUEUE)
         does_port_exist = self.port_exists(port_name)
@@ -906,6 +997,7 @@ class OVSBridge(BaseOVS):
                 txn.add(self.ovsdb.db_destroy('Queue', queue['_uuid']))
 
     def set_controller_field(self, field, value):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         attr = [(field, value)]
         controllers = self.db_get_val('Bridge', self.br_name, 'controller')
         controllers = [controllers] if isinstance(
@@ -916,6 +1008,7 @@ class OVSBridge(BaseOVS):
                     'Controller', controller_uuid, *attr))
 
     def set_controller_rate_limit(self, controller_rate_limit):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Set bridge controller_rate_limit
 
         :param controller_rate_limit: at least 100
@@ -927,6 +1020,7 @@ class OVSBridge(BaseOVS):
             'controller_rate_limit', controller_rate_limit)
 
     def set_controller_burst_limit(self, controller_burst_limit):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Set bridge controller_burst_limit
 
         :param controller_burst_limit: at least 25
@@ -938,11 +1032,13 @@ class OVSBridge(BaseOVS):
             'controller_burst_limit', controller_burst_limit)
 
     def set_datapath_id(self, datapath_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         dpid_cfg = {'datapath-id': datapath_id}
         self.set_db_attribute('Bridge', self.br_name, 'other_config', dpid_cfg,
                               check_error=True)
 
     def get_egress_min_bw_for_port(self, port_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         queue = self._find_queue(port_id)
         if not queue:
             return
@@ -951,6 +1047,7 @@ class OVSBridge(BaseOVS):
         return int(int(min_bps) / 1000) if min_bps else None
 
     def _set_queue_for_minimum_bandwidth(self, queue_num):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # reg4 is used to memoize if queue was set or not. If it is first visit
         # to table 0 for a packet (i.e. reg4 == 0), set queue and memoize (i.e.
         # load 1 to reg4), then goto table 0 again. The packet will be handled
@@ -964,6 +1061,7 @@ class OVSBridge(BaseOVS):
                      "resubmit(,%s)" % (queue_num, constants.LOCAL_SWITCHING)))
 
     def _unset_queue_for_minimum_bandwidth(self, queue_num):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.delete_flows(
             table=constants.LOCAL_SWITCHING,
             in_port=queue_num,
@@ -971,6 +1069,7 @@ class OVSBridge(BaseOVS):
 
     def update_minimum_bandwidth_queue(self, port_id, egress_port_names,
                                        queue_num, min_kbps):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         queue_num = int(queue_num)
         queue_id = self._update_queue(port_id, queue_num, min_kbps=min_kbps)
         qos_id, qos_queues = self._find_qos()
@@ -986,6 +1085,7 @@ class OVSBridge(BaseOVS):
         return qos_id
 
     def delete_minimum_bandwidth_queue(self, port_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         queue = self._find_queue(port_id)
         if not queue:
             return
@@ -1001,6 +1101,7 @@ class OVSBridge(BaseOVS):
             self._delete_queue(queue['_uuid'])
 
     def clear_minimum_bandwidth_qos(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         qoses = self._list_qos(
             qos_type=qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH)
 
@@ -1020,6 +1121,7 @@ class OVSBridge(BaseOVS):
 
     def _update_queue(self, port_id, queue_num, max_kbps=None,
                       max_burst_kbps=None, min_kbps=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         other_config = {}
         if max_kbps:
             other_config[six.u('max-rate')] = six.u(str(max_kbps * 1000))
@@ -1046,6 +1148,7 @@ class OVSBridge(BaseOVS):
         return queue['_uuid']
 
     def _find_queue(self, port_id, _type=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # NOTE(ralonsoh): in ovsdb native library, '{>=}' operator is not
         # implemented yet. This is a workaround: list all queues and compare
         # the external_ids key needed.
@@ -1056,6 +1159,7 @@ class OVSBridge(BaseOVS):
         return None
 
     def _list_queues(self, _type=None, port=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         queues = self.ovsdb.db_list(
             'Queue',
             columns=['_uuid', 'external_ids', 'other_config']).execute(
@@ -1069,12 +1173,14 @@ class OVSBridge(BaseOVS):
         return queues
 
     def _delete_queue(self, queue_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         try:
             self.ovsdb.db_destroy('Queue', queue_id).execute(check_error=True)
         except idlutils.RowNotFound:
             LOG.info('OVS Queue %s was already deleted', queue_id)
 
     def _update_qos(self, qos_id=None, queues=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         queues = queues or {}
         if not qos_id:
             external_ids = {'id': self._min_bw_qos_id,
@@ -1093,6 +1199,7 @@ class OVSBridge(BaseOVS):
         return qos_id
 
     def _list_qos(self, _id=None, qos_type=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         external_ids = {}
         if _id:
             external_ids['id'] = _id
@@ -1108,6 +1215,7 @@ class OVSBridge(BaseOVS):
             'QoS', colmuns=['_uuid', 'queues']).execute(check_error=True)
 
     def _find_qos(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         qos_regs = self._list_qos(_id=self._min_bw_qos_id)
         if qos_regs:
             queues = {num: queue.uuid
@@ -1116,6 +1224,7 @@ class OVSBridge(BaseOVS):
         return None, None
 
     def _set_port_qos(self, port_name, qos_id=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if qos_id:
             self.set_db_attribute('Port', port_name, 'qos', qos_id,
                                   check_error=True)
@@ -1123,6 +1232,7 @@ class OVSBridge(BaseOVS):
             self.clear_db_attribute('Port', port_name, 'qos')
 
     def get_bridge_ports(self, port_type=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         port_names = self.get_port_name_list() + [self.br_name]
         ports = self.get_ports_attributes('Interface',
                                           ports=port_names,
@@ -1135,14 +1245,17 @@ class OVSBridge(BaseOVS):
         return [port['name'] for port in ports if port['type'] in port_type]
 
     def __enter__(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.create()
         return self
 
     def __exit__(self, exc_type, exc_value, exc_tb):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.destroy()
 
 
 class DeferredOVSBridge(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     '''Deferred OVSBridge.
 
     This class wraps add_flow, mod_flow and delete_flows calls to an OVSBridge
@@ -1158,6 +1271,7 @@ class DeferredOVSBridge(object):
 
     def __init__(self, br, full_ordered=False,
                  order=('add', 'mod', 'del'), use_bundle=False):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         '''Constructor.
 
         :param br: wrapped bridge
@@ -1176,20 +1290,25 @@ class DeferredOVSBridge(object):
         self.use_bundle = use_bundle
 
     def __getattr__(self, name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if name in self.ALLOWED_PASSTHROUGHS:
             return getattr(self.br, name)
         raise AttributeError(name)
 
     def add_flow(self, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.action_flow_tuples.append(('add', kwargs))
 
     def mod_flow(self, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.action_flow_tuples.append(('mod', kwargs))
 
     def delete_flows(self, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.action_flow_tuples.append(('del', kwargs))
 
     def apply_flows(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         action_flow_tuples = self.action_flow_tuples
         self.action_flow_tuples = []
         if not action_flow_tuples:
@@ -1206,9 +1325,11 @@ class DeferredOVSBridge(object):
             self.br.do_action_flows(action, flows, self.use_bundle)
 
     def __enter__(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if exc_type is None:
             self.apply_flows()
         else:
@@ -1217,6 +1338,7 @@ class DeferredOVSBridge(object):
 
 
 def _build_flow_expr_str(flow_dict, cmd, strict):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     flow_expr_arr = []
     actions = None
 
@@ -1253,11 +1375,13 @@ def _build_flow_expr_str(flow_dict, cmd, strict):
 
 
 def generate_random_cookie():
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # The OpenFlow spec forbids use of -1
     return random.randrange(UINT64_BITMASK)
 
 
 def check_cookie_mask(cookie):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     cookie = str(cookie)
     if '/' not in cookie:
         return cookie + '/-1'
@@ -1266,6 +1390,7 @@ def check_cookie_mask(cookie):
 
 
 def is_a_flow_line(line):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # this is used to filter out from ovs-ofctl dump-flows the lines that
     # are not flow descriptions but mere indications of the type of openflow
     # message that was used ; e.g.:

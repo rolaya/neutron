@@ -24,19 +24,20 @@ from neutron.api.rpc.callbacks import events as events_rpc
 from neutron.api.rpc.handlers import resources_rpc
 from neutron import objects
 from neutron.common import utils
+from neutron.common import log_utils
 
 LOG = logging.getLogger(__name__)
 objects.register_objects()
 
 
 class RemoteResourceCache(object):
-    LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Retrieves and stashes logical resources in their OVO format.
 
     This is currently only compatible with OVO objects that have an ID.
     """
     def __init__(self, resource_types):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.resource_types = resource_types
         self._cache_by_type_and_id = {rt: {} for rt in self.resource_types}
         self._deleted_ids_by_type = {rt: set() for rt in self.resource_types}
@@ -45,17 +46,17 @@ class RemoteResourceCache(object):
         self._puller = resources_rpc.ResourcesPullRpcApi()
 
     def _type_cache(self, rtype):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if rtype not in self.resource_types:
             raise RuntimeError(_("Resource cache not tracking %s") % rtype)
         return self._cache_by_type_and_id[rtype]
 
     def start_watcher(self):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self._watcher = RemoteResourceWatcher(self)
 
     def get_resource_by_id(self, rtype, obj_id, agent_restarted=False):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Returns None if it doesn't exist."""
         if obj_id in self._deleted_ids_by_type[rtype]:
             return None
@@ -69,7 +70,7 @@ class RemoteResourceCache(object):
 
     def _flood_cache_for_query(self, rtype, agent_restarted=False,
                                **filter_kwargs):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Load info from server for first query.
 
         Queries the server if this is the first time a given query for
@@ -97,7 +98,7 @@ class RemoteResourceCache(object):
         self._satisfied_server_queries.update(query_ids)
 
     def _get_query_ids(self, rtype, filters):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Turns filters for a given rypte into a set of query IDs.
 
         This can result in multiple queries due to the nature of the query
@@ -121,7 +122,7 @@ class RemoteResourceCache(object):
         return query_ids
 
     def get_resources(self, rtype, filters):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Find resources that match key:values in filters dict.
 
         If the attribute on the object is a list, each value is checked if it
@@ -150,14 +151,14 @@ class RemoteResourceCache(object):
         return self.match_resources_with_func(rtype, match)
 
     def match_resources_with_func(self, rtype, matcher):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Returns a list of all resources satisfying func matcher."""
         # TODO(kevinbenton): this is O(N), offer better lookup functions
         return [r for r in self._type_cache(rtype).values()
                 if matcher(r)]
 
     def _is_stale(self, rtype, resource):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Determines if a given resource update is safe to ignore.
 
         It can be safe to ignore if it has already been deleted or if
@@ -175,7 +176,7 @@ class RemoteResourceCache(object):
 
     def record_resource_update(self, context, rtype, resource,
                                agent_restarted=False):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Takes in an OVO and generates an event on relevant changes.
 
         A change is deemed to be relevant if it is not stale and if any
@@ -210,7 +211,7 @@ class RemoteResourceCache(object):
                         agent_restarted=agent_restarted)
 
     def record_resource_delete(self, context, rtype, resource_id):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # deletions are final, record them so we never
         # accept new data for the same ID.
         LOG.debug("Resource %s deleted: %s", rtype, resource_id)
@@ -226,7 +227,7 @@ class RemoteResourceCache(object):
                         existing=existing, resource_id=resource_id)
 
     def _get_changed_fields(self, old, new):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Returns changed fields excluding update time and revision."""
         new = new.to_dict()
         changed = set(new)
@@ -240,7 +241,7 @@ class RemoteResourceCache(object):
 
 
 class RemoteResourceWatcher(object):
-    LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Converts RPC callback notifications to local registry notifications.
 
     This allows a constructor to listen for RPC callbacks for a given
@@ -254,12 +255,12 @@ class RemoteResourceWatcher(object):
     """
 
     def __init__(self, remote_resource_cache):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.rcache = remote_resource_cache
         self._init_rpc_listeners()
 
     def _init_rpc_listeners(self):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         endpoints = [resources_rpc.ResourcesPushRpcCallback()]
         self._connection = n_rpc.Connection()
         for rtype in self.rcache.resource_types:
@@ -269,7 +270,7 @@ class RemoteResourceWatcher(object):
         self._connection.consume_in_threads()
 
     def resource_change_handler(self, context, rtype, resources, event_type):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         for r in resources:
             if event_type == events_rpc.DELETED:
                 self.rcache.record_resource_delete(context, rtype, r.id)

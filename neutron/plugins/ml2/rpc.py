@@ -35,6 +35,8 @@ from neutron.db import l3_hamode_db
 from neutron.db import provisioning_blocks
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2.drivers import type_tunnel
+from neutron.common import log_utils
+
 # REVISIT(kmestery): Allow the type and mechanism drivers to supply the
 # mixins and eventually remove the direct dependencies on type_tunnel.
 
@@ -42,6 +44,7 @@ LOG = log.getLogger(__name__)
 
 
 class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     # history
     #   1.0 Initial version (from openvswitch/linuxbridge)
@@ -58,10 +61,12 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
     target = oslo_messaging.Target(version='1.7')
 
     def __init__(self, notifier, type_manager):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.setup_tunnel_callback_mixin(notifier, type_manager)
         super(RpcCallbacks, self).__init__()
 
     def _get_new_status(self, host, port_context):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         port = port_context.current
         if not host or host == port_context.host:
             new_status = (n_const.PORT_STATUS_BUILD if port['admin_state_up']
@@ -71,11 +76,13 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
 
     @staticmethod
     def _get_request_details(kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return (kwargs.get('agent_id'),
                 kwargs.get('host'),
                 kwargs.get('device') or kwargs.get('network'))
 
     def get_device_details(self, rpc_context, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Agent requests device details."""
         agent_id, host, device = self._get_request_details(kwargs)
 
@@ -120,6 +127,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
 
     def _get_device_details(self, rpc_context, agent_id, host, device,
                             port_context):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         segment = port_context.bottom_bound_segment
         port = port_context.current
 
@@ -166,6 +174,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
         return entry
 
     def get_devices_details_list(self, rpc_context, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # cached networks used for reducing number of network db calls
         cached_networks = {}
         return [
@@ -181,6 +190,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
     def get_devices_details_list_and_failed_devices(self,
                                                     rpc_context,
                                                     **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         devices = []
         failed_devices = []
         devices_to_fetch = kwargs.pop('devices', [])
@@ -224,6 +234,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                 'failed_devices': failed_devices}
 
     def get_network_details(self, rpc_context, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Agent requests network details."""
         agent_id, host, network = self._get_request_details(kwargs)
         LOG.debug("Network %(network)s details requested by agent "
@@ -234,6 +245,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
 
     @profiler.trace("rpc")
     def update_device_down(self, rpc_context, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Device no longer exists on agent."""
         # TODO(garyk) - live migration and port status
         agent_id, host, device = self._get_request_details(kwargs)
@@ -266,6 +278,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
 
     @profiler.trace("rpc")
     def update_device_up(self, rpc_context, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Device is up on agent."""
         agent_restarted = kwargs.pop('agent_restarted', False)
         agent_id, host, device = self._get_request_details(kwargs)
@@ -304,6 +317,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                                       agent_restarted)
 
     def update_port_status_to_active(self, port, rpc_context, port_id, host):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         plugin = directory.get_plugin()
         if port and port['device_owner'] == n_const.DEVICE_OWNER_DVR_INTERFACE:
             # NOTE(kevinbenton): we have to special case DVR ports because of
@@ -326,6 +340,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
 
     def notify_l2pop_port_wiring(self, port_id, rpc_context,
                                  status, host, agent_restarted=False):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Notify the L2pop driver that a port has been wired/unwired.
 
         The L2pop driver uses this notification to broadcast forwarding
@@ -371,6 +386,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
 
     @profiler.trace("rpc")
     def update_device_list(self, rpc_context, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         devices_up = []
         failed_devices_up = []
         devices_down = []
@@ -409,6 +425,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                 'failed_devices_down': failed_devices_down}
 
     def get_ports_by_vnic_type_and_host(self, rpc_context, vnic_type, host):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         plugin = directory.get_plugin()
         return plugin.get_ports_by_vnic_type_and_host(
             rpc_context, vnic_type=vnic_type, host=host)
@@ -417,6 +434,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
 class AgentNotifierApi(dvr_rpc.DVRAgentRpcApiMixin,
                        sg_rpc.SecurityGroupAgentRpcApiMixin,
                        type_tunnel.TunnelAgentRpcApiMixin):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Agent side of the openvswitch rpc API.
 
     API version history:
@@ -428,6 +446,7 @@ class AgentNotifierApi(dvr_rpc.DVRAgentRpcApiMixin,
     """
 
     def __init__(self, topic):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.topic = topic
         self.topic_network_delete = topics.get_topic_name(topic,
                                                           topics.NETWORK,
@@ -450,12 +469,14 @@ class AgentNotifierApi(dvr_rpc.DVRAgentRpcApiMixin,
         self.client = n_rpc.get_client(target)
 
     def network_delete(self, context, network_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         cctxt = self.client.prepare(topic=self.topic_network_delete,
                                     fanout=True)
         cctxt.cast(context, 'network_delete', network_id=network_id)
 
     def port_update(self, context, port, network_type, segmentation_id,
                     physical_network):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         cctxt = self.client.prepare(topic=self.topic_port_update,
                                     fanout=True)
         cctxt.cast(context, 'port_update', port=port,
@@ -463,22 +484,26 @@ class AgentNotifierApi(dvr_rpc.DVRAgentRpcApiMixin,
                    physical_network=physical_network)
 
     def port_delete(self, context, port_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         cctxt = self.client.prepare(topic=self.topic_port_delete,
                                     fanout=True)
         cctxt.cast(context, 'port_delete', port_id=port_id)
 
     def network_update(self, context, network):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         cctxt = self.client.prepare(topic=self.topic_network_update,
                                     fanout=True, version='1.4')
         cctxt.cast(context, 'network_update', network=network)
 
     def binding_deactivate(self, context, port_id, host, network_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         cctxt = self.client.prepare(topic=self.topic_port_binding_deactivate,
                                     fanout=True, version='1.5')
         cctxt.cast(context, 'binding_deactivate', port_id=port_id, host=host,
                    network_id=network_id)
 
     def binding_activate(self, context, port_id, host):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         cctxt = self.client.prepare(topic=self.topic_port_binding_activate,
                                     fanout=True, version='1.5')
         cctxt.cast(context, 'binding_activate', port_id=port_id, host=host)

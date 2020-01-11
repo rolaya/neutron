@@ -26,6 +26,7 @@ from neutron.agent.linux import l3_tc_lib as tc_lib
 from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
+from neutron.common import log_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -51,14 +52,17 @@ IP_DEFAULT_BURST = 0
 
 
 class RateLimitMaps(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def __init__(self, lock_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.qos_policy_resources = collections.defaultdict(dict)
         self.known_policies = {}
         self.resource_policies = {}
         self.lock_name = lock_name
 
     def update_policy(self, policy):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
         @lockutils.synchronized(self.lock_name)
         def _update_policy():
@@ -67,6 +71,7 @@ class RateLimitMaps(object):
         return _update_policy()
 
     def get_policy(self, policy_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
         @lockutils.synchronized(self.lock_name)
         def _get_policy():
@@ -75,6 +80,7 @@ class RateLimitMaps(object):
         return _get_policy()
 
     def get_resources(self, policy):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
         @lockutils.synchronized(self.lock_name)
         def _get_resources():
@@ -83,6 +89,7 @@ class RateLimitMaps(object):
         return _get_resources()
 
     def get_resource_policy(self, resource):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
         @lockutils.synchronized(self.lock_name)
         def _get_resource_policy():
@@ -92,6 +99,7 @@ class RateLimitMaps(object):
         return _get_resource_policy()
 
     def set_resource_policy(self, resource, policy):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Attach a resource to policy
 
         and return any previous policy on resource.
@@ -110,6 +118,7 @@ class RateLimitMaps(object):
         _set_resource_policy()
 
     def clean_by_resource(self, resource):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Detach resource from policy
 
         and cleanup data we don't need anymore.
@@ -132,14 +141,17 @@ class RateLimitMaps(object):
         _clean_by_resource()
 
     def _clean_policy_info(self, qos_policy_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         del self.qos_policy_resources[qos_policy_id]
         del self.known_policies[qos_policy_id]
 
 
 class L3QosAgentExtensionBase(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     SUPPORTED_RESOURCE_TYPES = [resources.QOS_POLICY]
 
     def consume_api(self, agent_api):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.agent_api = agent_api
 
     def _handle_notification(self, context, resource_type,
@@ -150,10 +162,12 @@ class L3QosAgentExtensionBase(object):
         pass
 
     def _policy_rules_modified(self, old_policy, policy):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return not (len(old_policy.rules) == len(policy.rules) and
                     all(i in old_policy.rules for i in policy.rules))
 
     def _register_rpc_consumers(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         registry.register(self._handle_notification, resources.QOS_POLICY)
 
         self._connection = n_rpc.Connection()
@@ -164,10 +178,12 @@ class L3QosAgentExtensionBase(object):
         self._connection.consume_in_threads()
 
     def _get_tc_wrapper(self, device):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return tc_lib.FloatingIPTcCommand(device.name,
                                           namespace=device.namespace)
 
     def get_policy_rates(self, policy):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         rates = {}
         for rule in policy.rules:
             # NOTE(liuyulong): for now, the L3 agent QoS extensions only
@@ -190,6 +206,7 @@ class L3QosAgentExtensionBase(object):
         return rates
 
     def _get_router_info(self, router_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         router_info = self.agent_api.get_router_info(router_id)
         if router_info:
             return router_info

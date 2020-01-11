@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log
 from neutron_lib import constants
 from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
@@ -22,10 +23,13 @@ from neutron.db.models import l3
 from neutron.db import models_v2
 from neutron.db import rbac_db_models
 from neutron.db import standard_attr
+from neutron.common import log_utils
 
+LOG = log.getLogger(__name__)
 
 class QosPolicy(standard_attr.HasStandardAttributes, model_base.BASEV2,
                 model_base.HasId, model_base.HasProject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     __tablename__ = 'qos_policies'
     name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
     rbac_entries = sa.orm.relationship(rbac_db_models.QosPolicyRBAC,
@@ -37,6 +41,7 @@ class QosPolicy(standard_attr.HasStandardAttributes, model_base.BASEV2,
 
 
 class QosNetworkPolicyBinding(model_base.BASEV2):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     __tablename__ = 'qos_network_policy_bindings'
     policy_id = sa.Column(sa.String(36),
                           sa.ForeignKey('qos_policies.id',
@@ -63,6 +68,7 @@ class QosNetworkPolicyBinding(model_base.BASEV2):
 
 
 class QosFIPPolicyBinding(model_base.BASEV2):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     __tablename__ = 'qos_fip_policy_bindings'
     policy_id = sa.Column(sa.String(db_const.UUID_FIELD_SIZE),
                           sa.ForeignKey('qos_policies.id',
@@ -83,6 +89,7 @@ class QosFIPPolicyBinding(model_base.BASEV2):
 
 
 class QosRouterGatewayIPPolicyBinding(model_base.BASEV2):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     __tablename__ = 'qos_router_gw_policy_bindings'
     policy_id = sa.Column(sa.String(db_const.UUID_FIELD_SIZE),
                           sa.ForeignKey('qos_policies.id',
@@ -103,6 +110,7 @@ class QosRouterGatewayIPPolicyBinding(model_base.BASEV2):
 
 
 class QosPortPolicyBinding(model_base.BASEV2):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     __tablename__ = 'qos_port_policy_bindings'
     policy_id = sa.Column(sa.String(36),
                           sa.ForeignKey('qos_policies.id',
@@ -124,6 +132,7 @@ class QosPortPolicyBinding(model_base.BASEV2):
 
 class QosPolicyDefault(model_base.BASEV2,
                        model_base.HasProjectPrimaryKeyIndex):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     __tablename__ = 'qos_policies_default'
     qos_policy_id = sa.Column(sa.String(36),
                               sa.ForeignKey('qos_policies.id',
@@ -134,6 +143,7 @@ class QosPolicyDefault(model_base.BASEV2,
 
 
 class QosBandwidthLimitRule(model_base.HasId, model_base.BASEV2):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     __tablename__ = 'qos_bandwidth_limit_rules'
     qos_policy_id = sa.Column(sa.String(36),
                               sa.ForeignKey('qos_policies.id',
@@ -158,6 +168,7 @@ class QosBandwidthLimitRule(model_base.HasId, model_base.BASEV2):
 
 
 class QosDscpMarkingRule(model_base.HasId, model_base.BASEV2):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     __tablename__ = 'qos_dscp_marking_rules'
     qos_policy_id = sa.Column(sa.String(36),
                               sa.ForeignKey('qos_policies.id',
@@ -170,6 +181,7 @@ class QosDscpMarkingRule(model_base.HasId, model_base.BASEV2):
 
 
 class QosMinimumBandwidthRule(model_base.HasId, model_base.BASEV2):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     __tablename__ = 'qos_minimum_bandwidth_rules'
     qos_policy_id = sa.Column(sa.String(36),
                               sa.ForeignKey('qos_policies.id',

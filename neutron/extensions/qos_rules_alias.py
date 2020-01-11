@@ -17,14 +17,18 @@ from neutron_lib.api import extensions as api_extensions
 from neutron_lib.plugins import constants
 
 from neutron.api.v2 import resource_helper
+from neutrong.common import log_utils
 
+LOG = logging.getLogger(__name__)
 
 class Qos_rules_alias(api_extensions.APIExtensionDescriptor):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Extension class supporting QoS rules alias API resources."""
     api_definition = apidef
 
     @classmethod
     def get_resources(cls):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Returns Ext Resources."""
         plural_mappings = resource_helper.build_plural_mappings(
                 {}, apidef.RESOURCE_ATTRIBUTE_MAP)

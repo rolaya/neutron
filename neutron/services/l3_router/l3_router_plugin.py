@@ -53,12 +53,13 @@ from neutron.extensions import _admin_state_down_before_update_lib
 from neutron.quota import resource_registry
 from neutron import service
 from neutron.services.l3_router.service_providers import driver_controller
-
+from neutron.common import log_utils
 
 LOG = logging.getLogger(__name__)
 
 
 def disable_dvr_extension_by_config(aliases):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     if not cfg.CONF.enable_dvr:
         LOG.info('Disabled DVR extension.')
         if 'dvr' in aliases:
@@ -66,6 +67,7 @@ def disable_dvr_extension_by_config(aliases):
 
 
 def disable_l3_qos_extension_by_plugins(ext, aliases):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     qos_class = 'neutron.services.qos.qos_plugin.QoSPlugin'
     if all(p not in cfg.CONF.service_plugins for p in ['qos', qos_class]):
         if ext in aliases:
@@ -82,6 +84,7 @@ class L3RouterPlugin(service_base.ServicePluginBase,
                      l3_fip_qos.FloatingQoSDbMixin,
                      l3_fip_port_details.Fip_port_details_db_mixin,
                      l3_fip_pools_db.FloatingIPPoolsMixin):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     """Implementation of the Neutron L3 Router Service Plugin.
 
@@ -120,6 +123,7 @@ class L3RouterPlugin(service_base.ServicePluginBase,
     @resource_registry.tracked_resources(router=l3_models.Router,
                                          floatingip=l3_models.FloatingIP)
     def __init__(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.router_scheduler = importutils.import_object(
             cfg.CONF.router_scheduler_driver)
         self.add_periodic_l3_agent_status_check()
@@ -138,6 +142,7 @@ class L3RouterPlugin(service_base.ServicePluginBase,
 
     @property
     def supported_extension_aliases(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not hasattr(self, '_aliases'):
             aliases = self._supported_extension_aliases[:]
             disable_dvr_extension_by_config(aliases)
@@ -148,6 +153,7 @@ class L3RouterPlugin(service_base.ServicePluginBase,
 
     @log_helpers.log_method_call
     def start_rpc_listeners(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # RPC support
         self.topic = topics.L3PLUGIN
         self.conn = n_rpc.Connection()
@@ -158,18 +164,22 @@ class L3RouterPlugin(service_base.ServicePluginBase,
 
     @classmethod
     def get_plugin_type(cls):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return plugin_constants.L3
 
     def get_plugin_description(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """returns string description of the plugin."""
         return ("L3 Router Service Plugin for basic L3 forwarding"
                 " between (L2) Neutron networks and access to external"
                 " networks via a NAT gateway.")
 
     def router_supports_scheduling(self, context, router_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.l3_driver_controller.uses_scheduler(context, router_id)
 
     def create_floatingip(self, context, floatingip):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Create floating IP.
 
         :param context: Neutron request context
@@ -187,4 +197,5 @@ class L3RouterPlugin(service_base.ServicePluginBase,
     @staticmethod
     @resource_extend.extends([l3_apidef.ROUTERS])
     def add_flavor_id(router_res, router_db):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         router_res['flavor_id'] = router_db['flavor_id']

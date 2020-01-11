@@ -17,6 +17,7 @@ import abc
 import itertools
 import re
 
+from oslo_log import log
 from neutron_lib.api.definitions import qos as apidef
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib.plugins import constants
@@ -28,19 +29,25 @@ from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.api.v2 import resource_helper
 from neutron.objects.qos import rule as rule_object
+from neutron.common import log_utils
 
+
+LOG = log.getLogger(__name__)
 
 class Qos(api_extensions.APIExtensionDescriptor):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Quality of Service API extension."""
 
     api_definition = apidef
 
     @classmethod
     def get_plugin_interface(cls):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return QoSPluginBase
 
     @classmethod
     def get_resources(cls):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Returns Ext Resources."""
         special_mappings = {'policies': 'policy'}
         plural_mappings = resource_helper.build_plural_mappings(
@@ -82,6 +89,7 @@ class Qos(api_extensions.APIExtensionDescriptor):
 
 @six.add_metaclass(abc.ABCMeta)
 class QoSPluginBase(service_base.ServicePluginBase):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     path_prefix = apidef.API_PREFIX
 
@@ -103,6 +111,7 @@ class QoSPluginBase(service_base.ServicePluginBase):
                                ]
 
     def __getattr__(self, attrib):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Implement method proxies for all policy-rule-specific requests. For
         a given request type (such as to update a rule), a single method will
         handle requests for all rule types.  For example, the
@@ -138,6 +147,7 @@ class QoSPluginBase(service_base.ServicePluginBase):
         raise AttributeError(attrib)
 
     def _call_proxy_method(self, method_name, rule_cls):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Call proxy method. We need to add the rule_cls, obtained from the
         self.rule_objects dictionary, to the incoming args.  The context is
         passed to proxy method as first argument; the remaining args will
@@ -167,6 +177,7 @@ class QoSPluginBase(service_base.ServicePluginBase):
         :type rule_cls: a class from the rule_object (qos.objects.rule) module
         """
         def _make_call(method_name, rule_cls, *args, **kwargs):
+            LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
             context = args[0]
             args_list = list(args[1:])
             params = kwargs
@@ -185,6 +196,7 @@ class QoSPluginBase(service_base.ServicePluginBase):
             method_name, rule_cls, *args, **kwargs)
 
     def get_plugin_description(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return "QoS Service Plugin for ports and networks"
 
     @classmethod

@@ -32,6 +32,7 @@ from neutron import extensions as core_extensions
 from neutron.plugins.common import constants as const
 from neutron.services import provider_configuration
 from neutron import wsgi
+from neutron.common import log_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -42,6 +43,7 @@ _PLUGIN_AGNOSTIC_EXTENSIONS = set()
 
 
 def register_custom_supported_check(alias, f, plugin_agnostic=False):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     '''Register a custom function to determine if extension is supported.
 
     Consequent calls for the same alias replace the registered function.
@@ -59,12 +61,15 @@ def register_custom_supported_check(alias, f, plugin_agnostic=False):
 
 
 class ActionExtensionController(wsgi.Controller):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def __init__(self, application):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.application = application
         self.action_handlers = {}
 
     def add_action(self, action_name, handler):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.action_handlers[action_name] = handler
 
     def action(self, request, id):
@@ -79,15 +84,19 @@ class ActionExtensionController(wsgi.Controller):
 
 
 class RequestExtensionController(wsgi.Controller):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def __init__(self, application):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.application = application
         self.handlers = []
 
     def add_handler(self, handler):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.handlers.append(handler)
 
     def process(self, request, *args, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         res = request.get_response(self.application)
         # currently request handlers are un-ordered
         for handler in self.handlers:
@@ -96,12 +105,15 @@ class RequestExtensionController(wsgi.Controller):
 
 
 class ExtensionController(wsgi.Controller):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def __init__(self, extension_manager):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.extension_manager = extension_manager
 
     @staticmethod
     def _translate(ext):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         ext_data = {}
         ext_data['name'] = ext.get_name()
         ext_data['alias'] = ext.get_alias()
@@ -111,12 +123,14 @@ class ExtensionController(wsgi.Controller):
         return ext_data
 
     def index(self, request):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         extensions = []
         for _alias, ext in self.extension_manager.extensions.items():
             extensions.append(self._translate(ext))
         return dict(extensions=extensions)
 
     def show(self, request, id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # NOTE(dprince): the extensions alias is used as the 'id' for show
         ext = self.extension_manager.extensions.get(id, None)
         if not ext:
@@ -125,19 +139,23 @@ class ExtensionController(wsgi.Controller):
         return dict(extension=self._translate(ext))
 
     def delete(self, request, id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         msg = _('Resource not found.')
         raise webob.exc.HTTPNotFound(msg)
 
     def create(self, request):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         msg = _('Resource not found.')
         raise webob.exc.HTTPNotFound(msg)
 
 
 class ExtensionMiddleware(base.ConfigurableMiddleware):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Extensions middleware for WSGI."""
 
     def __init__(self, application,
                  ext_mgr=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.ext_mgr = (ext_mgr or
                         ExtensionManager(get_extensions_path()))
         mapper = routes.Mapper()
@@ -203,12 +221,14 @@ class ExtensionMiddleware(base.ConfigurableMiddleware):
 
     @classmethod
     def factory(cls, global_config, **local_config):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Paste factory."""
         def _factory(app):
             return cls(app, global_config, **local_config)
         return _factory
 
     def _action_ext_controllers(self, application, ext_mgr, mapper):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Return a dict of ActionExtensionController-s by collection."""
         action_controllers = {}
         for action in ext_mgr.get_actions():
@@ -228,6 +248,7 @@ class ExtensionMiddleware(base.ConfigurableMiddleware):
         return action_controllers
 
     def _request_ext_controllers(self, application, ext_mgr, mapper):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Returns a dict of RequestExtensionController-s by collection."""
         request_ext_controllers = {}
         for req_ext in ext_mgr.get_request_extensions():
@@ -248,6 +269,7 @@ class ExtensionMiddleware(base.ConfigurableMiddleware):
 
     @webob.dec.wsgify(RequestClass=wsgi.Request)
     def __call__(self, req):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Route the incoming request with router."""
         req.environ['extended.app'] = self.application
         return self._router
@@ -255,6 +277,7 @@ class ExtensionMiddleware(base.ConfigurableMiddleware):
     @staticmethod
     @webob.dec.wsgify(RequestClass=wsgi.Request)
     def _dispatch(req):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Dispatch the request.
 
         Returns the routed WSGI app's response or defers to the extended
@@ -268,14 +291,17 @@ class ExtensionMiddleware(base.ConfigurableMiddleware):
 
 
 def plugin_aware_extension_middleware_factory(global_config, **local_config):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Paste factory."""
     def _factory(app):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         ext_mgr = PluginAwareExtensionManager.get_instance()
         return ExtensionMiddleware(app, ext_mgr=ext_mgr)
     return _factory
 
 
 class ExtensionManager(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Load extensions from the configured extension path.
 
     See tests/unit/extensions/foxinsocks.py for an
@@ -283,12 +309,14 @@ class ExtensionManager(object):
     """
 
     def __init__(self, path):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         LOG.info('Initializing extension manager.')
         self.path = path
         self.extensions = {}
         self._load_all_extensions()
 
     def get_resources(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Returns a list of ResourceExtension objects."""
         resources = []
         resources.append(ResourceExtension('extensions',
@@ -298,6 +326,7 @@ class ExtensionManager(object):
         return resources
 
     def get_pecan_resources(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Returns a list of PecanResourceExtension objects."""
         resources = []
         for ext in self.extensions.values():
@@ -305,6 +334,7 @@ class ExtensionManager(object):
         return resources
 
     def get_actions(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Returns a list of ActionExtension objects."""
         actions = []
         for ext in self.extensions.values():
@@ -312,6 +342,7 @@ class ExtensionManager(object):
         return actions
 
     def get_request_extensions(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Returns a list of RequestExtension objects."""
         request_exts = []
         for ext in self.extensions.values():
@@ -319,6 +350,7 @@ class ExtensionManager(object):
         return request_exts
 
     def extend_resources(self, version, attr_map):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Extend resources with additional resources or attributes.
 
         :param attr_map: the existing mapping from resource name to
@@ -379,12 +411,14 @@ class ExtensionManager(object):
             ext.update_attributes_map(attr_map)
 
     def _is_sub_resource(self, resource):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return ('parent' in resource and
                 isinstance(resource['parent'], dict) and
                 'member_name' in resource['parent'] and
                 'parameters' in resource)
 
     def _check_faulty_extensions(self, faulty_extensions):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Raise for non-default faulty extensions.
 
         Gracefully fail for defective default extensions, which will be
@@ -404,6 +438,7 @@ class ExtensionManager(object):
                     pass
 
     def _check_extension(self, extension):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Checks for required methods in extension objects."""
         try:
             LOG.debug('Ext name="%(name)s" alias="%(alias)s" '
@@ -418,6 +453,7 @@ class ExtensionManager(object):
         return isinstance(extension, api_extensions.ExtensionDescriptor)
 
     def _load_all_extensions(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Load extensions from the configured path.
 
         The extension name is constructed from the module_name. If your
@@ -435,6 +471,7 @@ class ExtensionManager(object):
                 LOG.error("Extension path '%s' doesn't exist!", path)
 
     def _load_all_extensions_from_path(self, path):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # Sorting the extension list makes the order in which they
         # are loaded predictable across a cluster of load-balanced
         # Neutron Servers
@@ -461,6 +498,7 @@ class ExtensionManager(object):
                             {'f': f, 'exception': exception})
 
     def add_extension(self, ext):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # Do nothing if the extension doesn't check out
         if not self._check_extension(ext):
             return
@@ -474,15 +512,18 @@ class ExtensionManager(object):
 
 
 class PluginAwareExtensionManager(ExtensionManager):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     _instance = None
 
     def __init__(self, path, plugins):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.plugins = plugins
         super(PluginAwareExtensionManager, self).__init__(path)
         self.check_if_plugin_extensions_loaded()
 
     def _check_extension(self, extension):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Check if an extension is supported by any plugin."""
         extension_is_valid = super(PluginAwareExtensionManager,
                                    self)._check_extension(extension)
@@ -497,6 +538,7 @@ class PluginAwareExtensionManager(ExtensionManager):
                 self._plugins_implement_interface(extension))
 
     def _plugins_support(self, extension):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         alias = extension.get_alias()
         supports_extension = alias in self.get_supported_extension_aliases()
         if not supports_extension:
@@ -505,6 +547,7 @@ class PluginAwareExtensionManager(ExtensionManager):
         return supports_extension
 
     def _plugins_implement_interface(self, extension):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if extension.get_plugin_interface() is None:
             return True
         for plugin in self.plugins.values():
@@ -517,6 +560,7 @@ class PluginAwareExtensionManager(ExtensionManager):
 
     @classmethod
     def get_instance(cls):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if cls._instance is None:
             service_plugins = directory.get_plugins()
             cls._instance = cls(get_extensions_path(service_plugins),
@@ -524,6 +568,7 @@ class PluginAwareExtensionManager(ExtensionManager):
         return cls._instance
 
     def get_plugin_supported_extension_aliases(self, plugin):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Return extension aliases supported by a given plugin"""
         aliases = set()
         # we also check all classes that the plugins inherit to see if they
@@ -539,6 +584,7 @@ class PluginAwareExtensionManager(ExtensionManager):
         return aliases
 
     def get_supported_extension_aliases(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Gets extension aliases supported by all plugins."""
         aliases = set()
         for plugin in self.plugins.values():
@@ -552,9 +598,11 @@ class PluginAwareExtensionManager(ExtensionManager):
 
     @classmethod
     def clear_instance(cls):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         cls._instance = None
 
     def check_if_plugin_extensions_loaded(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Check if an extension supported by a plugin has been loaded."""
         plugin_extensions = self.get_supported_extension_aliases()
         missing_aliases = plugin_extensions - set(self.extensions)
@@ -565,6 +613,7 @@ class PluginAwareExtensionManager(ExtensionManager):
 
 
 class RequestExtension(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Extend requests and responses of core Neutron OpenStack API controllers.
 
     Provide a way to add data to responses and handle custom request data
@@ -572,6 +621,7 @@ class RequestExtension(object):
     """
 
     def __init__(self, method, url_route, handler):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.url_route = url_route
         self.handler = handler
         self.conditions = dict(method=[method])
@@ -579,20 +629,24 @@ class RequestExtension(object):
 
 
 class ActionExtension(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Add custom actions to core Neutron OpenStack API controllers."""
 
     def __init__(self, collection, action_name, handler):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.collection = collection
         self.action_name = action_name
         self.handler = handler
 
 
 class ResourceExtension(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Add top level resources to the OpenStack API in Neutron."""
 
     def __init__(self, collection, controller, parent=None, path_prefix="",
                  collection_actions=None, member_actions=None, attr_map=None,
                  collection_methods=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         collection_actions = collection_actions or {}
         collection_methods = collection_methods or {}
         member_actions = member_actions or {}
@@ -610,6 +664,7 @@ class ResourceExtension(object):
 # Returns the extension paths from a config entry and the __path__
 # of neutron.extensions
 def get_extensions_path(service_plugins=None):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     paths = collections.OrderedDict()
 
     # Add Neutron core extensions
@@ -638,6 +693,7 @@ def get_extensions_path(service_plugins=None):
 
 
 def append_api_extensions_path(paths):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     paths = list(set([cfg.CONF.api_extensions_path] + paths))
     cfg.CONF.set_override('api_extensions_path',
                           ':'.join([p for p in paths if p]))

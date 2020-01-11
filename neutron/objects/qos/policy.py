@@ -17,6 +17,7 @@ import itertools
 
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.objects import common_types
+from oslo_log import log
 from oslo_db import exception as db_exc
 from oslo_utils import versionutils
 from oslo_versionedobjects import exception
@@ -32,10 +33,14 @@ from neutron.objects.qos import binding
 from neutron.objects.qos import rule as rule_obj_impl
 from neutron.objects import rbac
 from neutron.objects import rbac_db
+from neutron.common import log_utils
 
+
+LOG = log.getLogger(__name__)
 
 @base_db.NeutronObjectRegistry.register
 class QosPolicyRBAC(rbac.RBACBaseObject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version
     # Version 1.1: Inherit from rbac_db.RBACBaseObject; added 'id' and
     #              'project_id'; changed 'object_id' from StringField to
@@ -46,6 +51,7 @@ class QosPolicyRBAC(rbac.RBACBaseObject):
     db_model = rbac_db_models.QosPolicyRBAC
 
     def obj_make_compatible(self, primitive, target_version):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         _target_version = versionutils.convert_version_to_tuple(target_version)
         if _target_version < (1, 1):
             standard_fields = ['id', 'project_id']
@@ -55,6 +61,7 @@ class QosPolicyRBAC(rbac.RBACBaseObject):
 
 @base_db.NeutronObjectRegistry.register
 class QosPolicy(rbac_db.NeutronRbacObject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version
     # Version 1.1: QosDscpMarkingRule introduced
     # Version 1.2: Added QosMinimumBandwidthRule
@@ -91,6 +98,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                       'router': binding.QosPolicyRouterGatewayIPBinding}
 
     def obj_load_attr(self, attrname):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if attrname == 'rules':
             return self._reload_rules()
         elif attrname == 'is_default':
@@ -98,11 +106,13 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         return super(QosPolicy, self).obj_load_attr(attrname)
 
     def _reload_rules(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         rules = rule_obj_impl.get_rules(self, self.obj_context, self.id)
         setattr(self, 'rules', rules)
         self.obj_reset_changes(['rules'])
 
     def _reload_is_default(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if self.get_default() == self.id:
             setattr(self, 'is_default', True)
         else:
@@ -110,6 +120,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         self.obj_reset_changes(['is_default'])
 
     def get_rule_by_id(self, rule_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Return rule specified by rule_id.
 
         @raise QosRuleNotFound: if there is no such rule in the policy.
@@ -123,6 +134,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
 
     # TODO(hichihara): For tag mechanism. This will be removed in bug/1704137
     def to_dict(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         _dict = super(QosPolicy, self).to_dict()
         try:
             _dict['tags'] = [t.tag for t in self.db_obj.standard_attr.tags]
@@ -134,6 +146,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
 
     @classmethod
     def get_policy_obj(cls, context, policy_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Fetch a QoS policy.
 
         :param context: neutron api request context
@@ -152,6 +165,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
 
     @classmethod
     def get_object(cls, context, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         policy_obj = super(QosPolicy, cls).get_object(context, **kwargs)
         if not policy_obj:
             return
@@ -163,6 +177,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
     @classmethod
     def get_objects(cls, context, _pager=None, validate_filters=True,
                     **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         objs = super(QosPolicy, cls).get_objects(context, _pager,
                                                  validate_filters,
                                                  **kwargs)
@@ -175,6 +190,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
 
     @classmethod
     def _get_object_policy(cls, context, binding_cls, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         with cls.db_context_reader(context):
             binding_db_obj = obj_db_api.get_object(binding_cls, context,
                                                    **kwargs)
@@ -183,27 +199,32 @@ class QosPolicy(rbac_db.NeutronRbacObject):
 
     @classmethod
     def get_network_policy(cls, context, network_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return cls._get_object_policy(context, binding.QosPolicyNetworkBinding,
                                       network_id=network_id)
 
     @classmethod
     def get_port_policy(cls, context, port_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return cls._get_object_policy(context, binding.QosPolicyPortBinding,
                                       port_id=port_id)
 
     @classmethod
     def get_fip_policy(cls, context, fip_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return cls._get_object_policy(
             context, binding.QosPolicyFloatingIPBinding, fip_id=fip_id)
 
     @classmethod
     def get_router_policy(cls, context, router_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return cls._get_object_policy(
             context, binding.QosPolicyRouterGatewayIPBinding,
             router_id=router_id)
 
     # TODO(QoS): Consider extending base to trigger registered methods for us
     def create(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         with self.db_context_writer(self.obj_context):
             super(QosPolicy, self).create()
             if self.is_default:
@@ -211,6 +232,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
             self.obj_load_attr('rules')
 
     def update(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         with self.db_context_writer(self.obj_context):
             if 'is_default' in self.obj_what_changed():
                 if self.is_default:
@@ -220,6 +242,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
             super(QosPolicy, self).update()
 
     def delete(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         with self.db_context_writer(self.obj_context):
             for object_type, obj_class in self.binding_models.items():
                 pager = base_db.Pager(limit=1)
@@ -235,6 +258,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
             super(QosPolicy, self).delete()
 
     def attach_network(self, network_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         network_binding = {'policy_id': self.id,
                            'network_id': network_id}
         network_binding_obj = binding.QosPolicyNetworkBinding(
@@ -247,6 +271,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                                                  db_error=e)
 
     def attach_port(self, port_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         port_binding_obj = binding.QosPolicyPortBinding(
             self.obj_context, policy_id=self.id, port_id=port_id)
         try:
@@ -257,6 +282,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                                               db_error=e)
 
     def attach_floatingip(self, fip_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         fip_binding_obj = binding.QosPolicyFloatingIPBinding(
             self.obj_context, policy_id=self.id, fip_id=fip_id)
         try:
@@ -267,6 +293,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                                                     db_error=e)
 
     def attach_router(self, router_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         router_binding_obj = binding.QosPolicyRouterGatewayIPBinding(
             self.obj_context, policy_id=self.id, router_id=router_id)
         try:
@@ -277,6 +304,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                                                 db_error=e)
 
     def detach_network(self, network_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         deleted = binding.QosPolicyNetworkBinding.delete_objects(
             self.obj_context, network_id=network_id)
         if not deleted:
@@ -284,6 +312,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                                                     policy_id=self.id)
 
     def detach_port(self, port_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         deleted = binding.QosPolicyPortBinding.delete_objects(self.obj_context,
                                                               port_id=port_id)
         if not deleted:
@@ -291,6 +320,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                                                  policy_id=self.id)
 
     def detach_floatingip(self, fip_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         deleted = binding.QosPolicyFloatingIPBinding.delete_objects(
             self.obj_context, fip_id=fip_id)
         if not deleted:
@@ -298,6 +328,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                                                        policy_id=self.id)
 
     def detach_router(self, router_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         deleted = binding.QosPolicyRouterGatewayIPBinding.delete_objects(
             self.obj_context, router_id=router_id)
         if not deleted:
@@ -305,6 +336,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                                                    policy_id=self.id)
 
     def set_default(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not self.get_default():
             qos_default_policy = QosPolicyDefault(self.obj_context,
                                                   qos_policy_id=self.id,
@@ -315,18 +347,21 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                 project_id=self.project_id)
 
     def unset_default(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if self.get_default() == self.id:
             qos_default_policy = QosPolicyDefault.get_object(
                 self.obj_context, project_id=self.project_id)
             qos_default_policy.delete()
 
     def get_default(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         qos_default_policy = QosPolicyDefault.get_object(
             self.obj_context, project_id=self.project_id)
         if qos_default_policy:
             return qos_default_policy.qos_policy_id
 
     def get_bound_networks(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return [
             nb.network_id
             for nb in binding.QosPolicyNetworkBinding.get_objects(
@@ -334,6 +369,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         ]
 
     def get_bound_ports(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return [
             pb.port_id
             for pb in binding.QosPolicyPortBinding.get_objects(
@@ -341,6 +377,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         ]
 
     def get_bound_floatingips(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return [
             fb.fip_id
             for fb in binding.QosPolicyFloatingIPBinding.get_objects(
@@ -348,6 +385,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         ]
 
     def get_bound_routers(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return [
             rb.router_id
             for rb in binding.QosPolicyRouterGatewayIPBinding.get_objects(
@@ -357,6 +395,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
     @classmethod
     def _get_bound_tenant_ids(cls, session, binding_db, bound_db,
                               binding_db_id_column, policy_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return list(itertools.chain.from_iterable(
             session.query(bound_db.tenant_id).join(
                 binding_db, bound_db.id == binding_db_id_column).filter(
@@ -364,6 +403,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
 
     @classmethod
     def get_bound_tenant_ids(cls, context, policy_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Implements RbacNeutronObject.get_bound_tenant_ids.
 
         :returns: set -- a set of tenants' ids dependent on QosPolicy.
@@ -392,6 +432,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         return set(bound_tenants)
 
     def obj_make_compatible(self, primitive, target_version):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         _target_version = versionutils.convert_version_to_tuple(target_version)
         if _target_version < (1, 8):
             raise exception.IncompatibleObjectVersion(
@@ -400,6 +441,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
 
 @base_db.NeutronObjectRegistry.register
 class QosPolicyDefault(base_db.NeutronDbObject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version
     VERSION = '1.0'
 

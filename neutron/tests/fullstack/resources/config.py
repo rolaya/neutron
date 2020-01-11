@@ -26,6 +26,7 @@ from neutron.tests.common.exclusive_resources import port
 from neutron.tests.common import helpers as c_helpers
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import base as fullstack_base
+from neutron.common import log_utils
 
 PHYSICAL_NETWORK_NAME = "physnet1"
 MINIMUM_BANDWIDTH_INGRESS_KBPS = 1000
@@ -42,6 +43,7 @@ CLIENT_CONN_PORT_END = 65000
 
 
 class ConfigFixture(config_fixtures.ConfigFileFixture):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """A fixture that holds an actual Neutron configuration.
 
     Note that 'self.config' is intended to only be updated once, during
@@ -50,19 +52,23 @@ class ConfigFixture(config_fixtures.ConfigFileFixture):
     is initializing a new instance of the class.
     """
     def __init__(self, env_desc, host_desc, temp_dir, base_filename):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         super(ConfigFixture, self).__init__(
             base_filename, config_fixtures.ConfigDict(), temp_dir)
         self.env_desc = env_desc
         self.host_desc = host_desc
 
     def _generate_namespace_suffix(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return utils.get_rand_name(prefix='test')
 
 
 class NeutronConfigFixture(ConfigFixture):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def __init__(self, env_desc, host_desc, temp_dir,
                  connection, rabbitmq_environment):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         super(NeutronConfigFixture, self).__init__(
             env_desc, host_desc, temp_dir, base_filename='neutron.conf')
 
@@ -131,6 +137,7 @@ class NeutronConfigFixture(ConfigFixture):
                                          CLIENT_CONN_PORT_END)
 
     def _setUp(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.config['DEFAULT'].update({
             'bind_port': self.useFixture(
                 port.ExclusivePort(constants.PROTO_NAME_TCP,
@@ -140,26 +147,33 @@ class NeutronConfigFixture(ConfigFixture):
         super(NeutronConfigFixture, self)._setUp()
 
     def _generate_host(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return utils.get_rand_name(prefix='host-')
 
     def _generate_state_path(self, temp_dir):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # Assume that temp_dir will be removed by the caller
         self.state_path = tempfile.mkdtemp(prefix='state_path', dir=temp_dir)
         return self.state_path
 
     def _generate_api_paste(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return c_helpers.find_sample_file('api-paste.ini')
 
     def _generate_policy_json(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return c_helpers.find_sample_file('policy.json')
 
     def get_host(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.config['DEFAULT']['host']
 
 
 class ML2ConfigFixture(ConfigFixture):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def __init__(self, env_desc, host_desc, temp_dir, tenant_network_types):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         super(ML2ConfigFixture, self).__init__(
             env_desc, host_desc, temp_dir, base_filename='ml2_conf.ini')
 
@@ -190,8 +204,10 @@ class ML2ConfigFixture(ConfigFixture):
 
 
 class OVSConfigFixture(ConfigFixture):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def __init__(self, env_desc, host_desc, temp_dir, local_ip, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         super(OVSConfigFixture, self).__init__(
             env_desc, host_desc, temp_dir,
             base_filename='openvswitch_agent.ini')
@@ -323,9 +339,11 @@ class PlacementConfigFixture(ConfigFixture):
 
 
 class LinuxBridgeConfigFixture(ConfigFixture):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def __init__(self, env_desc, host_desc, temp_dir, local_ip,
                  physical_device_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         super(LinuxBridgeConfigFixture, self).__init__(
             env_desc, host_desc, temp_dir,
             base_filename="linuxbridge_agent.ini"
@@ -373,8 +391,10 @@ class LinuxBridgeConfigFixture(ConfigFixture):
 
 
 class L3ConfigFixture(ConfigFixture):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def __init__(self, env_desc, host_desc, temp_dir, integration_bridge=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         super(L3ConfigFixture, self).__init__(
             env_desc, host_desc, temp_dir, base_filename='l3_agent.ini')
         if host_desc.l2_agent_type == constants.AGENT_TYPE_OVS:
@@ -401,6 +421,7 @@ class L3ConfigFixture(ConfigFixture):
             })
 
     def _prepare_config_with_ovs_agent(self, integration_bridge):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.config.update({
             'DEFAULT': {
                 'interface_driver': ('neutron.agent.linux.interface.'
@@ -410,6 +431,7 @@ class L3ConfigFixture(ConfigFixture):
         })
 
     def _prepare_config_with_linuxbridge_agent(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.config.update({
             'DEFAULT': {
                 'interface_driver': ('neutron.agent.linux.interface.'
@@ -419,8 +441,10 @@ class L3ConfigFixture(ConfigFixture):
 
 
 class DhcpConfigFixture(ConfigFixture):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def __init__(self, env_desc, host_desc, temp_dir, integration_bridge=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         super(DhcpConfigFixture, self).__init__(
             env_desc, host_desc, temp_dir, base_filename='dhcp_agent.ini')
 
@@ -442,10 +466,12 @@ class DhcpConfigFixture(ConfigFixture):
             })
 
     def _setUp(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         super(DhcpConfigFixture, self)._setUp()
         self.addCleanup(self._clean_dhcp_path)
 
     def _prepare_config_with_ovs_agent(self, integration_bridge):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.config.update({
             'DEFAULT': {
                 'interface_driver': 'openvswitch',
@@ -454,6 +480,7 @@ class DhcpConfigFixture(ConfigFixture):
         })
 
     def _prepare_config_with_linuxbridge_agent(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.config.update({
             'DEFAULT': {
                 'interface_driver': 'linuxbridge',
@@ -461,6 +488,7 @@ class DhcpConfigFixture(ConfigFixture):
         })
 
     def _generate_dhcp_path(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # NOTE(slaweq): dhcp_conf path needs to be directory with read
         # permission for everyone, otherwise dnsmasq process will not be able
         # to read his configs
@@ -469,4 +497,5 @@ class DhcpConfigFixture(ConfigFixture):
         return self.dhcp_path
 
     def _clean_dhcp_path(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         shutil.rmtree(self.dhcp_path, ignore_errors=True)

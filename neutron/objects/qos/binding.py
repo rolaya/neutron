@@ -13,14 +13,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log
 from neutron_lib.objects import common_types
 
 from neutron.db.qos import models as qos_db_model
 from neutron.objects import base
+from neutron.common import log_utils
 
+LOG = log.getLogger(__name__)
 
 @base.NeutronObjectRegistry.register
 class QosPolicyPortBinding(base.NeutronDbObject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version
     VERSION = '1.0'
 
@@ -37,6 +41,7 @@ class QosPolicyPortBinding(base.NeutronDbObject):
 
 @base.NeutronObjectRegistry.register
 class QosPolicyNetworkBinding(base.NeutronDbObject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version
     VERSION = '1.0'
 
@@ -53,6 +58,7 @@ class QosPolicyNetworkBinding(base.NeutronDbObject):
 
 @base.NeutronObjectRegistry.register
 class QosPolicyFloatingIPBinding(base.NeutronDbObject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version
     VERSION = '1.0'
 
@@ -69,6 +75,7 @@ class QosPolicyFloatingIPBinding(base.NeutronDbObject):
 
 @base.NeutronObjectRegistry.register
 class QosPolicyRouterGatewayIPBinding(base.NeutronDbObject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version
     VERSION = '1.0'
 

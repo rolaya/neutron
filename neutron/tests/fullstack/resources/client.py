@@ -21,6 +21,7 @@ from neutron_lib import constants
 from neutronclient.common import exceptions
 
 from neutron.common import utils
+from neutron.common import log_utils
 
 
 def _safe_method(f):
@@ -34,13 +35,16 @@ def _safe_method(f):
 
 
 class ClientFixture(fixtures.Fixture):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Manage and cleanup neutron resources."""
 
     def __init__(self, client):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         super(ClientFixture, self).__init__()
         self.client = client
 
     def _create_resource(self, resource_type, spec):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         create = getattr(self.client, 'create_%s' % resource_type)
         delete = getattr(self.client, 'delete_%s' % resource_type)
 
@@ -51,6 +55,7 @@ class ClientFixture(fixtures.Fixture):
         return data
 
     def _update_resource(self, resource_type, id, spec):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         update = getattr(self.client, 'update_%s' % resource_type)
 
         body = {resource_type: spec}
@@ -58,12 +63,14 @@ class ClientFixture(fixtures.Fixture):
         return resp[resource_type]
 
     def _delete_resource(self, resource_type, id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         delete = getattr(self.client, 'delete_%s' % resource_type)
 
         return delete(id)
 
     def create_router(self, tenant_id, name=None, ha=False,
                       external_network=None, external_subnet=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         resource_type = 'router'
 
         name = name or utils.get_rand_name(prefix=resource_type)
@@ -77,11 +84,13 @@ class ClientFixture(fixtures.Fixture):
         return self._create_resource(resource_type, spec)
 
     def update_router(self, router_id, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self._update_resource('router', router_id, kwargs)
 
     def create_network(self, tenant_id, name=None, external=False,
                        network_type=None, segmentation_id=None,
                        physical_network=None, mtu=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         resource_type = 'network'
 
         name = name or utils.get_rand_name(prefix=resource_type)
@@ -100,14 +109,17 @@ class ClientFixture(fixtures.Fixture):
         return self._create_resource(resource_type, spec)
 
     def update_network(self, id, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self._update_resource('network', id, kwargs)
 
     def delete_network(self, id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self._delete_resource('network', id)
 
     def create_subnet(self, tenant_id, network_id,
                       cidr, gateway_ip=None, name=None, enable_dhcp=True,
                       ipv6_address_mode='slaac', ipv6_ra_mode='slaac'):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         resource_type = 'subnet'
 
         name = name or utils.get_rand_name(prefix=resource_type)
@@ -125,11 +137,13 @@ class ClientFixture(fixtures.Fixture):
         return self._create_resource(resource_type, spec)
 
     def list_ports(self, retrieve_all=True, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         resp = self.client.list_ports(retrieve_all=retrieve_all, **kwargs)
         return resp['ports']
 
     def create_port(self, tenant_id, network_id, hostname=None,
                     qos_policy_id=None, security_groups=None, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         spec = {
             'network_id': network_id,
             'tenant_id': tenant_id,
@@ -144,10 +158,12 @@ class ClientFixture(fixtures.Fixture):
         return self._create_resource('port', spec)
 
     def update_port(self, port_id, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self._update_resource('port', port_id, kwargs)
 
     def create_floatingip(self, tenant_id, floating_network_id,
                           fixed_ip_address, port_id, qos_policy_id=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         spec = {
             'floating_network_id': floating_network_id,
             'tenant_id': tenant_id,
@@ -160,6 +176,7 @@ class ClientFixture(fixtures.Fixture):
         return self._create_resource('floatingip', spec)
 
     def add_router_interface(self, router_id, subnet_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         body = {'subnet_id': subnet_id}
         router_interface_info = self.client.add_interface_router(
             router=router_id, body=body)
@@ -169,6 +186,7 @@ class ClientFixture(fixtures.Fixture):
 
     def create_qos_policy(self, tenant_id, name, description, shared,
                           is_default):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         policy = self.client.create_qos_policy(
             body={'policy': {'name': name,
                              'description': description,
@@ -194,6 +212,7 @@ class ClientFixture(fixtures.Fixture):
 
     def create_bandwidth_limit_rule(self, tenant_id, qos_policy_id, limit=None,
                                     burst=None, direction=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         rule = {'tenant_id': tenant_id}
         if limit:
             rule['max_kbps'] = limit
@@ -213,6 +232,7 @@ class ClientFixture(fixtures.Fixture):
 
     def create_minimum_bandwidth_rule(self, tenant_id, qos_policy_id,
                                       min_bw, direction=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         rule = {'tenant_id': tenant_id,
                 'min_kbps': min_bw}
         if direction:
@@ -228,6 +248,7 @@ class ClientFixture(fixtures.Fixture):
         return rule['minimum_bandwidth_rule']
 
     def create_dscp_marking_rule(self, tenant_id, qos_policy_id, dscp_mark=0):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         rule = {'tenant_id': tenant_id}
         if dscp_mark:
             rule['dscp_mark'] = dscp_mark
@@ -243,6 +264,7 @@ class ClientFixture(fixtures.Fixture):
 
     def create_trunk(self, tenant_id, port_id, name=None,
                      admin_state_up=None, sub_ports=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Create a trunk via API.
 
         :param tenant_id: ID of the tenant.
@@ -278,6 +300,7 @@ class ClientFixture(fixtures.Fixture):
         return trunk
 
     def trunk_add_subports(self, tenant_id, trunk_id, sub_ports):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Add subports to the trunk.
 
         :param tenant_id: ID of the tenant.
@@ -301,6 +324,7 @@ class ClientFixture(fixtures.Fixture):
             sub_ports_to_remove)
 
     def trunk_remove_subports(self, tenant_id, trunk_id, sub_ports):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Remove subports from the trunk.
 
         :param trunk_id: ID of the trunk.
@@ -313,6 +337,7 @@ class ClientFixture(fixtures.Fixture):
         return self.client.trunk_remove_subports(trunk_id, spec)
 
     def create_security_group(self, tenant_id, name=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         resource_type = 'security_group'
 
         name = name or utils.get_rand_name(prefix=resource_type)
@@ -322,6 +347,7 @@ class ClientFixture(fixtures.Fixture):
 
     def create_security_group_rule(self, tenant_id, security_group_id,
                                    **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         resource_type = 'security_group_rule'
 
         spec = {'tenant_id': tenant_id,
@@ -333,6 +359,7 @@ class ClientFixture(fixtures.Fixture):
     def create_network_log(self, tenant_id, resource_type,
                            enabled=True, **kwargs):
 
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         spec = {'project_id': tenant_id,
                 'resource_type': resource_type,
                 'enabled': enabled}

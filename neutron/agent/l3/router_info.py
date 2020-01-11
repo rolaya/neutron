@@ -30,6 +30,7 @@ from neutron.agent.linux import ra
 from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
 from neutron.ipam import utils as ipam_utils
+from neutron.common import log_utils
 
 LOG = logging.getLogger(__name__)
 INTERNAL_DEV_PREFIX = namespaces.INTERNAL_DEV_PREFIX
@@ -44,6 +45,7 @@ DEFAULT_ADDRESS_SCOPE = "noscope"
 
 @six.add_metaclass(abc.ABCMeta)
 class BaseRouterInfo(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def __init__(self,
                  agent,
@@ -52,6 +54,7 @@ class BaseRouterInfo(object):
                  agent_conf,
                  interface_driver,
                  use_ipv6=False):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.agent = agent
         self.router_id = router_id
         # Invoke the setter for establishing initial SNAT action
@@ -66,6 +69,7 @@ class BaseRouterInfo(object):
         self.process_monitor = None
 
     def initialize(self, process_monitor):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Initialize the router on the system.
 
         This differs from __init__ in that this method actually affects the
@@ -79,10 +83,12 @@ class BaseRouterInfo(object):
 
     @property
     def router(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self._router
 
     @router.setter
     def router(self, value):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self._router = value
         if not self._router:
             return
@@ -95,6 +101,7 @@ class BaseRouterInfo(object):
 
     @abc.abstractmethod
     def process(self, agent):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Process updates to this router
 
         This method is the point where the agent requests that updates be
@@ -105,22 +112,28 @@ class BaseRouterInfo(object):
         pass
 
     def get_ex_gw_port(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.router.get('gw_port')
 
     def get_gw_ns_name(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.ns_name
 
     def get_internal_device_name(self, port_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return (INTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
 
     def get_external_device_name(self, port_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return (EXTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
 
     def get_external_device_interface_name(self, ex_gw_port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.get_external_device_name(ex_gw_port['id'])
 
 
 class RouterInfo(BaseRouterInfo):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def __init__(self,
                  agent,
@@ -129,6 +142,7 @@ class RouterInfo(BaseRouterInfo):
                  agent_conf,
                  interface_driver,
                  use_ipv6=False):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         super(RouterInfo, self).__init__(agent, router_id, router, agent_conf,
                                          interface_driver, use_ipv6)
 
@@ -157,6 +171,7 @@ class RouterInfo(BaseRouterInfo):
         self.qos_gateway_ips = set()
 
     def initialize(self, process_monitor):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         super(RouterInfo, self).initialize(process_monitor)
         self.radvd = ra.DaemonMonitor(self.router_id,
                                       self.ns_name,
@@ -168,6 +183,7 @@ class RouterInfo(BaseRouterInfo):
 
     def create_router_namespace_object(
             self, router_id, agent_conf, iface_driver, use_ipv6):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return namespaces.RouterNamespace(
             router_id, agent_conf, iface_driver, use_ipv6)
 
@@ -175,17 +191,20 @@ class RouterInfo(BaseRouterInfo):
         return True
 
     def _update_routing_table(self, operation, route, namespace):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         cmd = ['ip', 'route', operation, 'to', route['destination'],
                'via', route['nexthop']]
         ip_wrapper = ip_lib.IPWrapper(namespace=namespace)
         ip_wrapper.netns.execute(cmd, check_exit_code=False)
 
     def update_routing_table(self, operation, route):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self._update_routing_table(operation, route, self.ns_name)
 
     def routes_updated(self, old_routes, new_routes):
         adds, removes = helpers.diff_list_of_dict(old_routes,
                                                   new_routes)
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         for route in adds:
             LOG.debug("Added route entry is '%s'", route)
             # remove replaced route from deleted route
@@ -199,14 +218,17 @@ class RouterInfo(BaseRouterInfo):
             self.update_routing_table('delete', route)
 
     def get_floating_ips(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Filter Floating IPs to be hosted on this agent."""
         return self.router.get(lib_constants.FLOATINGIP_KEY, [])
 
     def get_port_forwarding_fips(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Get router port forwarding floating IPs."""
         return self.router.get('_pf_floatingips', [])
 
     def floating_forward_rules(self, fip):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         fixed_ip = fip['fixed_ip_address']
         floating_ip = fip['floating_ip_address']
         to_source = '-s %s/32 -j SNAT --to-source %s' % (fixed_ip, floating_ip)
@@ -219,6 +241,7 @@ class RouterInfo(BaseRouterInfo):
                 ('float-snat', to_source)]
 
     def floating_mangle_rules(self, floating_ip, fixed_ip, internal_mark):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         mark_traffic_to_floating_ip = (
             'floatingip', '-d %s/32 -j MARK --set-xmark %s' % (
                 floating_ip, internal_mark))
@@ -227,6 +250,7 @@ class RouterInfo(BaseRouterInfo):
         return [mark_traffic_to_floating_ip, mark_traffic_from_fixed_ip]
 
     def get_address_scope_mark_mask(self, address_scope=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not address_scope:
             address_scope = DEFAULT_ADDRESS_SCOPE
 
@@ -239,6 +263,7 @@ class RouterInfo(BaseRouterInfo):
         return "%s/%s" % (hex(mark_id << 16), ADDRESS_SCOPE_MARK_MASK)
 
     def get_port_address_scope_mark(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Get the IP version 4 and 6 address scope mark for the port
 
         :param port: A port dict from the RPC call
@@ -253,6 +278,7 @@ class RouterInfo(BaseRouterInfo):
                                        address_scope_mark_masks)
 
     def process_floating_ip_nat_rules(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Configure NAT rules for the router's floating IPs.
 
         Configures iptables rules for the floating ips of the given router
@@ -271,6 +297,7 @@ class RouterInfo(BaseRouterInfo):
         self.iptables_manager.apply()
 
     def _process_pd_iptables_rules(self, prefix, subnet_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Configure iptables rules for prefix delegated subnets"""
         ext_scope = self._get_external_address_scope()
         ext_scope_mark = self.get_address_scope_mark_mask(ext_scope)
@@ -284,6 +311,7 @@ class RouterInfo(BaseRouterInfo):
             tag=('prefix_delegation_%s' % subnet_id))
 
     def process_floating_ip_address_scope_rules(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Configure address scope related iptables rules for the router's
          floating IPs.
         """
@@ -327,6 +355,7 @@ class RouterInfo(BaseRouterInfo):
                     chain, rule, tag='floating_ip')
 
     def process_snat_dnat_for_fip(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         try:
             self.process_floating_ip_nat_rules()
         except Exception:
@@ -336,6 +365,7 @@ class RouterInfo(BaseRouterInfo):
             raise l3_exc.FloatingIpSetupException(msg)
 
     def _add_fip_addr_to_device(self, fip, device):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Configures the floating ip address on the device.
         """
         try:
@@ -352,6 +382,7 @@ class RouterInfo(BaseRouterInfo):
         raise NotImplementedError()
 
     def migrate_centralized_floating_ip(self, fip, interface_name, device):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Implements centralized->distributed floating IP migration.
         Overridden in dvr_local_router.py
         """
@@ -361,21 +392,27 @@ class RouterInfo(BaseRouterInfo):
         pass
 
     def remove_floating_ip(self, device, ip_cidr):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         device.delete_addr_and_conntrack_state(ip_cidr)
 
     def move_floating_ip(self, fip):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return lib_constants.FLOATINGIP_STATUS_ACTIVE
 
     def remove_external_gateway_ip(self, device, ip_cidr):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         device.delete_addr_and_conntrack_state(ip_cidr)
 
     def get_router_cidrs(self, device):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return set([addr['cidr'] for addr in device.addr.list()])
 
     def get_centralized_fip_cidr_set(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return set()
 
     def process_floating_ip_addresses(self, interface_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Configure IP addresses on router's external gateway interface.
 
         Ensures addresses for existing floating IPs and cleans up
@@ -437,6 +474,7 @@ class RouterInfo(BaseRouterInfo):
         return fip_statuses
 
     def _get_gw_ips_cidr(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         gw_cidrs = set()
         ex_gw_port = self.get_ex_gw_port()
         if ex_gw_port:
@@ -448,6 +486,7 @@ class RouterInfo(BaseRouterInfo):
         return gw_cidrs
 
     def configure_fip_addresses(self, interface_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         try:
             return self.process_floating_ip_addresses(interface_name)
         except Exception:
@@ -457,12 +496,14 @@ class RouterInfo(BaseRouterInfo):
             raise l3_exc.FloatingIpSetupException(msg)
 
     def put_fips_in_error_state(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         fip_statuses = {}
         for fip in self.router.get(lib_constants.FLOATINGIP_KEY, []):
             fip_statuses[fip['id']] = lib_constants.FLOATINGIP_STATUS_ERROR
         return fip_statuses
 
     def delete(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.router['gw_port'] = None
         self.router[lib_constants.INTERFACE_KEY] = []
         self.router[lib_constants.FLOATINGIP_KEY] = []
@@ -472,6 +513,7 @@ class RouterInfo(BaseRouterInfo):
 
     def _internal_network_updated(self, port, subnet_id, prefix, old_prefix,
                                   updated_cidrs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         interface_name = self.get_internal_device_name(port['id'])
         if prefix != lib_constants.PROVISIONAL_IPV6_PD_PREFIX:
             fixed_ips = port['fixed_ips']
@@ -490,6 +532,7 @@ class RouterInfo(BaseRouterInfo):
     def _internal_network_added(self, ns_name, network_id, port_id,
                                 fixed_ips, mac_address,
                                 interface_name, prefix, mtu=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         LOG.debug("adding internal network: prefix(%s), port(%s)",
                   prefix, port_id)
         self.driver.plug(network_id, port_id, interface_name, mac_address,
@@ -505,6 +548,7 @@ class RouterInfo(BaseRouterInfo):
                                           fixed_ip['ip_address'])
 
     def internal_network_added(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         network_id = port['network_id']
         port_id = port['id']
         fixed_ips = port['fixed_ips']
@@ -522,6 +566,7 @@ class RouterInfo(BaseRouterInfo):
                                      mtu=port.get('mtu'))
 
     def internal_network_removed(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         interface_name = self.get_internal_device_name(port['id'])
         LOG.debug("removing internal network: port(%s) interface(%s)",
                   port['id'], interface_name)
@@ -530,11 +575,13 @@ class RouterInfo(BaseRouterInfo):
                                prefix=INTERNAL_DEV_PREFIX)
 
     def _get_existing_devices(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         ip_wrapper = ip_lib.IPWrapper(namespace=self.ns_name)
         ip_devs = ip_wrapper.get_devices()
         return [ip_dev.name for ip_dev in ip_devs]
 
     def _update_internal_ports_cache(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # NOTE(slaweq): self.internal_ports is a list of port objects but
         # when it is updated in _process_internal_ports() method,
         # but it can be based only on indexes of elements in
@@ -550,6 +597,7 @@ class RouterInfo(BaseRouterInfo):
 
     @staticmethod
     def _get_updated_ports(existing_ports, current_ports):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         updated_ports = []
         current_ports_dict = {p['id']: p for p in current_ports}
         for existing_port in existing_ports:
@@ -567,6 +615,7 @@ class RouterInfo(BaseRouterInfo):
 
     @staticmethod
     def _port_has_ipv6_subnet(port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if 'subnets' in port:
             for subnet in port['subnets']:
                 if (netaddr.IPNetwork(subnet['cidr']).version == 6 and
@@ -575,18 +624,21 @@ class RouterInfo(BaseRouterInfo):
                     return True
 
     def enable_radvd(self, internal_ports=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         LOG.debug('Spawning radvd daemon in router device: %s', self.router_id)
         if not internal_ports:
             internal_ports = self.internal_ports
         self.radvd.enable(internal_ports)
 
     def disable_radvd(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if self.radvd:
             LOG.debug('Terminating radvd daemon in router device: %s',
                       self.router_id)
             self.radvd.disable()
 
     def internal_network_updated(self, interface_name, ip_cidrs, mtu):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.driver.set_mtu(interface_name, mtu, namespace=self.ns_name,
                             prefix=INTERNAL_DEV_PREFIX)
         self.driver.init_router_port(
@@ -595,13 +647,17 @@ class RouterInfo(BaseRouterInfo):
             namespace=self.ns_name)
 
     def address_scope_mangle_rule(self, device_name, mark_mask):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return '-i %s -j MARK --set-xmark %s' % (device_name, mark_mask)
 
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     def address_scope_filter_rule(self, device_name, mark_mask):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return '-o %s -m mark ! --mark %s -j DROP' % (
             device_name, mark_mask)
 
     def _process_internal_ports(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         existing_port_ids = set(p['id'] for p in self.internal_ports)
 
         internal_ports = self.router.get(lib_constants.INTERFACE_KEY, [])
@@ -689,6 +745,7 @@ class RouterInfo(BaseRouterInfo):
                                prefix=INTERNAL_DEV_PREFIX)
 
     def _list_floating_ip_cidrs(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # Compute a list of addresses this router is supposed to have.
         # This avoids unnecessarily removing those addresses and
         # causing a momentarily network outage.
@@ -697,6 +754,7 @@ class RouterInfo(BaseRouterInfo):
                 for ip in floating_ips]
 
     def _plug_external_gateway(self, ex_gw_port, interface_name, ns_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.driver.plug(ex_gw_port['network_id'],
                          ex_gw_port['id'],
                          interface_name,
@@ -706,6 +764,7 @@ class RouterInfo(BaseRouterInfo):
                          mtu=ex_gw_port.get('mtu'))
 
     def _get_external_gw_ips(self, ex_gw_port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         gateway_ips = []
         if 'subnets' in ex_gw_port:
             gateway_ips = [subnet['gateway_ip']
@@ -720,6 +779,7 @@ class RouterInfo(BaseRouterInfo):
 
     def _add_route_to_gw(self, ex_gw_port, device_name,
                          namespace, preserve_ips):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # Note: ipv6_gateway is an ipv6 LLA
         # and so doesn't need a special route
         for subnet in ex_gw_port.get('subnets', []):
@@ -734,6 +794,7 @@ class RouterInfo(BaseRouterInfo):
 
     def _configure_ipv6_params_on_gw(self, ex_gw_port, ns_name, interface_name,
                                      enabled):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not self.use_ipv6:
             return
 
@@ -760,6 +821,7 @@ class RouterInfo(BaseRouterInfo):
 
     def _external_gateway_added(self, ex_gw_port, interface_name,
                                 ns_name, preserve_ips):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         LOG.debug("External gateway added: port(%s), interface(%s), ns(%s)",
                   ex_gw_port, interface_name, ns_name)
         self._plug_external_gateway(ex_gw_port, interface_name, ns_name)
@@ -801,6 +863,7 @@ class RouterInfo(BaseRouterInfo):
                                           fixed_ip['ip_address'])
 
     def is_v6_gateway_set(self, gateway_ips):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Check to see if list of gateway_ips has an IPv6 gateway.
         """
         # Note - don't require a try-except here as all
@@ -809,6 +872,7 @@ class RouterInfo(BaseRouterInfo):
                    for gw_ip in gateway_ips)
 
     def external_gateway_added(self, ex_gw_port, interface_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         preserve_ips = self._list_floating_ip_cidrs() + list(
             self.centralized_port_forwarding_fip_set)
         preserve_ips.extend(self.agent.pd.get_preserve_ips(self.router_id))
@@ -816,6 +880,7 @@ class RouterInfo(BaseRouterInfo):
             ex_gw_port, interface_name, self.ns_name, preserve_ips)
 
     def external_gateway_updated(self, ex_gw_port, interface_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         preserve_ips = self._list_floating_ip_cidrs() + list(
             self.centralized_port_forwarding_fip_set)
         preserve_ips.extend(self.agent.pd.get_preserve_ips(self.router_id))
@@ -823,6 +888,7 @@ class RouterInfo(BaseRouterInfo):
             ex_gw_port, interface_name, self.ns_name, preserve_ips)
 
     def external_gateway_removed(self, ex_gw_port, interface_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         LOG.debug("External gateway removed: port(%s), interface(%s)",
                   ex_gw_port, interface_name)
         device = ip_lib.IPDevice(interface_name, namespace=self.ns_name)
@@ -838,9 +904,11 @@ class RouterInfo(BaseRouterInfo):
 
     @staticmethod
     def _gateway_ports_equal(port1, port2):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return port1 == port2
 
     def _delete_stale_external_devices(self, interface_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         existing_devices = self._get_existing_devices()
         stale_devs = [dev for dev in existing_devices
                       if dev.startswith(EXTERNAL_DEV_PREFIX) and
@@ -853,6 +921,7 @@ class RouterInfo(BaseRouterInfo):
                                prefix=EXTERNAL_DEV_PREFIX)
 
     def _process_external_gateway(self, ex_gw_port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # TODO(Carl) Refactor to clarify roles of ex_gw_port vs self.ex_gw_port
         ex_gw_port_id = (ex_gw_port and ex_gw_port['id'] or
                          self.ex_gw_port and self.ex_gw_port['id'])
@@ -882,12 +951,14 @@ class RouterInfo(BaseRouterInfo):
         self._handle_router_snat_rules(gw_port, interface_name)
 
     def _prevent_snat_for_internal_traffic_rule(self, interface_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return (
             'POSTROUTING', '! -o %(interface_name)s -m conntrack '
                            '! --ctstate DNAT -j ACCEPT' %
                            {'interface_name': interface_name})
 
     def external_gateway_nat_fip_rules(self, ex_gw_ip, interface_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         dont_snat_traffic_to_internal_ports_if_not_to_floating_ip = (
             self._prevent_snat_for_internal_traffic_rule(interface_name))
         # Makes replies come back through the router to reverse DNAT
@@ -903,12 +974,14 @@ class RouterInfo(BaseRouterInfo):
                 snat_internal_traffic_to_floating_ip]
 
     def external_gateway_nat_snat_rules(self, ex_gw_ip, interface_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         to_source = '-o %s -j SNAT --to-source %s' % (interface_name, ex_gw_ip)
         if self.iptables_manager.random_fully:
             to_source += ' --random-fully'
         return [('snat', to_source)]
 
     def external_gateway_mangle_rules(self, interface_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         mark = self.agent_conf.external_ingress_mark
         mark_packets_entering_external_gateway_port = (
             'mark', '-i %s -j MARK --set-xmark %s/%s' %
@@ -916,6 +989,7 @@ class RouterInfo(BaseRouterInfo):
         return [mark_packets_entering_external_gateway_port]
 
     def _empty_snat_chains(self, iptables_manager):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         iptables_manager.ipv4['nat'].empty_chain('POSTROUTING')
         iptables_manager.ipv4['nat'].empty_chain('snat')
         iptables_manager.ipv4['mangle'].empty_chain('mark')
@@ -923,6 +997,7 @@ class RouterInfo(BaseRouterInfo):
 
     def _add_snat_rules(self, ex_gw_port, iptables_manager,
                         interface_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.process_external_port_address_scope_routing(iptables_manager)
 
         if ex_gw_port:
@@ -948,6 +1023,7 @@ class RouterInfo(BaseRouterInfo):
                     break
 
     def _handle_router_snat_rules(self, ex_gw_port, interface_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self._empty_snat_chains(self.iptables_manager)
 
         self.iptables_manager.ipv4['nat'].add_rule('snat', '-j $float-snat')
@@ -957,6 +1033,7 @@ class RouterInfo(BaseRouterInfo):
                              interface_name)
 
     def _process_external_on_delete(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         fip_statuses = {}
         try:
             ex_gw_port = self.get_ex_gw_port()
@@ -976,6 +1053,7 @@ class RouterInfo(BaseRouterInfo):
             self.update_fip_statuses(fip_statuses)
 
     def process_external(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         fip_statuses = {}
         try:
             with self.iptables_manager.defer_apply():
@@ -1002,6 +1080,7 @@ class RouterInfo(BaseRouterInfo):
             self.update_fip_statuses(fip_statuses)
 
     def update_fip_statuses(self, fip_statuses):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # Identify floating IPs which were disabled
         existing_floating_ips = self.floating_ips
         self.floating_ips = set(fip_statuses.keys())
@@ -1018,9 +1097,11 @@ class RouterInfo(BaseRouterInfo):
             self.agent.context, self.router_id, fip_statuses)
 
     def initialize_address_scope_iptables(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self._initialize_address_scope_iptables(self.iptables_manager)
 
     def _initialize_address_scope_iptables(self, iptables_manager):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # Add address scope related chains
         iptables_manager.ipv4['mangle'].add_chain('scope')
         iptables_manager.ipv6['mangle'].add_chain('scope')
@@ -1065,6 +1146,7 @@ class RouterInfo(BaseRouterInfo):
             'PREROUTING', copy_address_scope_for_existing)
 
     def initialize_metadata_iptables(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # Always mark incoming metadata requests, that way any stray
         # requests that arrive before the filter metadata redirect
         # rule is installed will be dropped.
@@ -1080,6 +1162,7 @@ class RouterInfo(BaseRouterInfo):
             'PREROUTING', mark_metadata_for_internal_interfaces)
 
     def _get_port_devicename_scopemark(self, ports, name_generator):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         devicename_scopemark = {lib_constants.IP_VERSION_4: dict(),
                                 lib_constants.IP_VERSION_6: dict()}
         for p in ports:
@@ -1094,6 +1177,7 @@ class RouterInfo(BaseRouterInfo):
         return devicename_scopemark
 
     def _get_address_scope_mark(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # Prepare address scope iptables rule for internal ports
         internal_ports = self.router.get(lib_constants.INTERFACE_KEY, [])
         ports_scopemark = self._get_port_devicename_scopemark(
@@ -1111,6 +1195,7 @@ class RouterInfo(BaseRouterInfo):
         return ports_scopemark
 
     def _add_address_scope_mark(self, iptables_manager, ports_scopemark):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         external_device_name = None
         external_port = self.get_ex_gw_port()
         if external_port:
@@ -1141,10 +1226,12 @@ class RouterInfo(BaseRouterInfo):
                 self._process_pd_iptables_rules(prefix, subnet_id)
 
     def process_ports_address_scope_iptables(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         ports_scopemark = self._get_address_scope_mark()
         self._add_address_scope_mark(self.iptables_manager, ports_scopemark)
 
     def _get_external_address_scope(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         external_port = self.get_ex_gw_port()
         if not external_port:
             return
@@ -1153,6 +1240,7 @@ class RouterInfo(BaseRouterInfo):
         return scopes.get(str(lib_constants.IP_VERSION_4))
 
     def process_external_port_address_scope_routing(self, iptables_manager):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not self._snat_enabled:
             return
 
@@ -1184,12 +1272,14 @@ class RouterInfo(BaseRouterInfo):
         iptables_manager.ipv4['nat'].add_rule('snat', rule)
 
     def process_address_scope(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         with self.iptables_manager.defer_apply():
             self.process_ports_address_scope_iptables()
             self.process_floating_ip_address_scope_rules()
 
     @common_utils.exception_logger()
     def process_delete(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Process the delete of this router
 
         This method is the point where the agent requests that this router
@@ -1210,6 +1300,7 @@ class RouterInfo(BaseRouterInfo):
 
     @common_utils.exception_logger()
     def process(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         LOG.debug("Process updates, router %s", self.router['id'])
         self.centralized_port_forwarding_fip_set = set(self.router.get(
             'port_forwardings_fip_set', set()))

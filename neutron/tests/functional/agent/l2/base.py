@@ -43,12 +43,16 @@ from neutron.plugins.ml2.drivers.openvswitch.agent import ovs_neutron_agent \
     as ovs_agent
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
+from neutron.common import log_utils
 
+LOG = logging.getLogger(__name__)
 
 class OVSOFControllerHelper(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Helper class that runs os-ken openflow controller."""
 
     def start_of_controller(self, conf):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.br_int_cls = None
         self.br_tun_cls = None
         self.br_phys_cls = None
@@ -88,14 +92,17 @@ class OVSOFControllerHelper(object):
                 raise Exception('port allocation failed')
 
     def _kick_main(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         with mock.patch.object(ovs_agent, 'main', self._agent_main):
             main_mod.main()
 
     def _kill_main(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.main_ev.send()
         self._main_thread.wait()
 
     def _agent_main(self, bridge_classes):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.br_int_cls = bridge_classes['br_int']
         self.br_phys_cls = bridge_classes['br_phys']
         self.br_tun_cls = bridge_classes['br_tun']

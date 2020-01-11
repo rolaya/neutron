@@ -16,6 +16,7 @@ from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.validators import availability_zone as az_validator
 from neutron_lib import constants
 from neutron_lib.objects import common_types
+from oslo_log import log
 from oslo_utils import versionutils
 from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
@@ -34,10 +35,14 @@ from neutron.objects.extensions import port_security as base_ps
 from neutron.objects.qos import binding
 from neutron.objects import rbac
 from neutron.objects import rbac_db
+from neutron.common import log_utils
+
+LOG = log.getLogger(__name__)
 
 
 @base.NeutronObjectRegistry.register
 class NetworkRBAC(rbac.RBACBaseObject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version
     # Version 1.1: Added 'id' and 'project_id'
     # Version 1.2: Inherit from rbac.RBACBaseObject; changed 'object_id' from
@@ -48,6 +53,7 @@ class NetworkRBAC(rbac.RBACBaseObject):
     db_model = rbac_db_models.NetworkRBAC
 
     def obj_make_compatible(self, primitive, target_version):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         _target_version = versionutils.convert_version_to_tuple(target_version)
         if _target_version < (1, 1):
             standard_fields = ['id', 'project_id']
@@ -57,6 +63,7 @@ class NetworkRBAC(rbac.RBACBaseObject):
     @classmethod
     def get_projects(cls, context, object_id=None, action=None,
                      target_tenant=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         clauses = []
         if object_id:
             clauses.append(rbac_db_models.NetworkRBAC.object_id == object_id)
@@ -73,6 +80,7 @@ class NetworkRBAC(rbac.RBACBaseObject):
 
 @base.NeutronObjectRegistry.register
 class NetworkDhcpAgentBinding(base.NeutronDbObject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version
     # Version 1.1: Added 'binding_index'
 
@@ -92,6 +100,7 @@ class NetworkDhcpAgentBinding(base.NeutronDbObject):
     # currently doesn't support operators like '<' or '>'
     @classmethod
     def get_down_bindings(cls, context, cutoff):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         agent_objs = agent_obj.Agent.get_objects(context)
         dhcp_agent_ids = [obj.id for obj in agent_objs
                           if obj.heartbeat_timestamp < cutoff]
@@ -100,6 +109,7 @@ class NetworkDhcpAgentBinding(base.NeutronDbObject):
 
 @base.NeutronObjectRegistry.register
 class NetworkSegment(base.NeutronDbObject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version
     VERSION = '1.0'
 
@@ -127,6 +137,7 @@ class NetworkSegment(base.NeutronDbObject):
     }
 
     def create(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         fields = self.obj_get_changes()
         with self.db_context_writer(self.obj_context):
             hosts = self.hosts
@@ -137,6 +148,7 @@ class NetworkSegment(base.NeutronDbObject):
                 self._attach_hosts(hosts)
 
     def update(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         fields = self.obj_get_changes()
         with self.db_context_writer(self.obj_context):
             super(NetworkSegment, self).update()
@@ -144,6 +156,7 @@ class NetworkSegment(base.NeutronDbObject):
                 self._attach_hosts(fields['hosts'])
 
     def _attach_hosts(self, hosts):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         SegmentHostMapping.delete_objects(
             self.obj_context, segment_id=self.id,
         )
@@ -155,11 +168,13 @@ class NetworkSegment(base.NeutronDbObject):
         self.obj_reset_changes(['hosts'])
 
     def obj_load_attr(self, attrname):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if attrname == 'hosts':
             return self._load_hosts()
         super(NetworkSegment, self).obj_load_attr(attrname)
 
     def _load_hosts(self, db_obj=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if db_obj:
             hosts = db_obj.get('segment_host_mapping', [])
         else:
@@ -170,11 +185,13 @@ class NetworkSegment(base.NeutronDbObject):
         self.obj_reset_changes(['hosts'])
 
     def from_db_object(self, db_obj):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         super(NetworkSegment, self).from_db_object(db_obj)
         self._load_hosts(db_obj)
 
     @classmethod
     def get_objects(cls, context, _pager=None, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not _pager:
             _pager = base.Pager()
         if not _pager.sorts:
@@ -188,6 +205,7 @@ class NetworkSegment(base.NeutronDbObject):
 
 @base.NeutronObjectRegistry.register
 class NetworkPortSecurity(base_ps._PortSecurity):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version
     VERSION = "1.0"
 
@@ -198,6 +216,7 @@ class NetworkPortSecurity(base_ps._PortSecurity):
 
 @base.NeutronObjectRegistry.register
 class ExternalNetwork(base.NeutronDbObject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version
     VERSION = '1.0'
 
@@ -215,6 +234,7 @@ class ExternalNetwork(base.NeutronDbObject):
 
 @base.NeutronObjectRegistry.register
 class Network(rbac_db.NeutronRbacObject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version
     # Version 1.1: Changed 'mtu' to be not nullable
     VERSION = '1.1'
@@ -265,6 +285,7 @@ class Network(rbac_db.NeutronRbacObject):
     }
 
     def create(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         fields = self.obj_get_changes()
         with self.db_context_writer(self.obj_context):
             dns_domain = self.dns_domain
@@ -276,6 +297,7 @@ class Network(rbac_db.NeutronRbacObject):
                 self._attach_qos_policy(qos_policy_id)
 
     def update(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         fields = self.obj_get_changes()
         with self.db_context_writer(self.obj_context):
             super(Network, self).update()
@@ -285,6 +307,7 @@ class Network(rbac_db.NeutronRbacObject):
                 self._attach_qos_policy(fields['qos_policy_id'])
 
     def _attach_qos_policy(self, qos_policy_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         binding.QosPolicyNetworkBinding.delete_objects(
             self.obj_context, network_id=self.id)
         if qos_policy_id:
@@ -296,6 +319,7 @@ class Network(rbac_db.NeutronRbacObject):
         self.obj_reset_changes(['qos_policy_id'])
 
     def _set_dns_domain(self, dns_domain):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         NetworkDNSDomain.delete_objects(self.obj_context, network_id=self.id)
         if dns_domain:
             NetworkDNSDomain(self.obj_context, network_id=self.id,
@@ -305,6 +329,7 @@ class Network(rbac_db.NeutronRbacObject):
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         result = super(Network, cls).modify_fields_from_db(db_obj)
         if az_def.AZ_HINTS in result:
             result[az_def.AZ_HINTS] = (
@@ -314,6 +339,7 @@ class Network(rbac_db.NeutronRbacObject):
 
     @classmethod
     def modify_fields_to_db(cls, fields):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         result = super(Network, cls).modify_fields_to_db(fields)
         if az_def.AZ_HINTS in result:
             result[az_def.AZ_HINTS] = (
@@ -322,6 +348,7 @@ class Network(rbac_db.NeutronRbacObject):
         return result
 
     def from_db_object(self, *objs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         super(Network, self).from_db_object(*objs)
         for db_obj in objs:
             # extract domain name
@@ -344,10 +371,12 @@ class Network(rbac_db.NeutronRbacObject):
 
     @classmethod
     def get_bound_tenant_ids(cls, context, policy_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # TODO(ihrachys): provide actual implementation
         return set()
 
     def obj_make_compatible(self, primitive, target_version):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         _target_version = versionutils.convert_version_to_tuple(target_version)
         if _target_version >= (1, 1):
             if primitive['mtu'] is None:
@@ -358,6 +387,7 @@ class Network(rbac_db.NeutronRbacObject):
 
 @base.NeutronObjectRegistry.register
 class SegmentHostMapping(base.NeutronDbObject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version
     VERSION = '1.0'
 
@@ -373,6 +403,7 @@ class SegmentHostMapping(base.NeutronDbObject):
 
 @base.NeutronObjectRegistry.register
 class NetworkDNSDomain(base.NeutronDbObject):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Version 1.0: Initial version
     VERSION = '1.0'
 
@@ -387,6 +418,7 @@ class NetworkDNSDomain(base.NeutronDbObject):
 
     @classmethod
     def get_net_dns_from_port(cls, context, port_id):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         net_dns = context.session.query(cls.db_model).join(
             models_v2.Port, cls.db_model.network_id ==
             models_v2.Port.network_id).filter_by(

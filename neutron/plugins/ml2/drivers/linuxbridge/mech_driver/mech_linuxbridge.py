@@ -13,15 +13,20 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 
 from neutron.agent import securitygroups_rpc
 from neutron.plugins.ml2.drivers import mech_agent
 from neutron.services.qos.drivers.linuxbridge import driver as lb_qos_driver
+from neutron.common import log_utils
+
+LOG = log.getLogger(__name__)
 
 
 class LinuxbridgeMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Attach to networks using linuxbridge L2 agent.
 
     The LinuxbridgeMechanismDriver integrates the ml2 plugin with the
@@ -32,6 +37,7 @@ class LinuxbridgeMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     """
 
     def __init__(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         sg_enabled = securitygroups_rpc.is_firewall_enabled()
         vif_details = {portbindings.CAP_PORT_FILTER: sg_enabled,
                        portbindings.VIF_DETAILS_CONNECTIVITY:
@@ -43,15 +49,18 @@ class LinuxbridgeMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         lb_qos_driver.register()
 
     def get_allowed_network_types(self, agent):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return (agent['configurations'].get('tunnel_types', []) +
                 [constants.TYPE_LOCAL, constants.TYPE_FLAT,
                  constants.TYPE_VLAN])
 
     def get_mappings(self, agent):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         mappings = dict(agent['configurations'].get('interface_mappings', {}),
                         **agent['configurations'].get('bridge_mappings', {}))
         return mappings
 
     def check_vlan_transparency(self, context):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Linuxbridge driver vlan transparency support."""
         return True

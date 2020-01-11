@@ -21,16 +21,18 @@ from oslo_log import log as logging
 
 from neutron.agent.l2.extensions import qos_linux as qos
 from neutron.services.qos.drivers.openvswitch import driver
-
+from neutron.common import log_utils
 
 LOG = logging.getLogger(__name__)
 
 
 class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     SUPPORTED_RULES = driver.SUPPORTED_RULES
 
     def __init__(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         super(QosOVSAgentDriver, self).__init__()
         self.br_int_name = cfg.CONF.OVS.integration_bridge
         self.br_int = None
@@ -38,9 +40,11 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
         self.ports = collections.defaultdict(dict)
 
     def consume_api(self, agent_api):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.agent_api = agent_api
 
     def _minimum_bandwidth_initialize(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Clear QoS setting at agent restart.
 
         This is for clearing stale settings (such as ports and QoS tables
@@ -52,14 +56,17 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
         self.br_int.clear_minimum_bandwidth_qos()
 
     def initialize(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.br_int = self.agent_api.request_int_br()
         self.cookie = self.br_int.default_cookie
         self._minimum_bandwidth_initialize()
 
     def create_bandwidth_limit(self, port, rule):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.update_bandwidth_limit(port, rule)
 
     def update_bandwidth_limit(self, port, rule):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         vif_port = port.get('vif_port')
         if not vif_port:
             port_id = port.get('port_id')
@@ -75,6 +82,7 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
             self._update_egress_bandwidth_limit(vif_port, rule)
 
     def delete_bandwidth_limit(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         port_id = port.get('port_id')
         vif_port = port.get('vif_port')
         port = self.ports[port_id].pop((qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
@@ -91,6 +99,7 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
         self.br_int.delete_egress_bw_limit_for_port(vif_port.port_name)
 
     def delete_bandwidth_limit_ingress(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         port_id = port.get('port_id')
         vif_port = port.get('vif_port')
         port = self.ports[port_id].pop((qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
@@ -106,9 +115,11 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
         self.br_int.delete_ingress_bw_limit_for_port(vif_port.port_name)
 
     def create_dscp_marking(self, port, rule):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.update_dscp_marking(port, rule)
 
     def update_dscp_marking(self, port, rule):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.ports[port['port_id']][qos_consts.RULE_TYPE_DSCP_MARKING] = port
         vif_port = port.get('vif_port')
         if not vif_port:
@@ -122,6 +133,7 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
                                               dscp_mark=rule.dscp_mark)
 
     def delete_dscp_marking(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         vif_port = port.get('vif_port')
         dscp_port = self.ports[port['port_id']].pop(qos_consts.
                                                     RULE_TYPE_DSCP_MARKING, 0)
@@ -137,6 +149,7 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
         self.br_int.uninstall_flows(in_port=port_num, table_id=0, reg2=0)
 
     def _update_egress_bandwidth_limit(self, vif_port, rule):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         max_kbps = rule.max_kbps
         # NOTE(slaweq): According to ovs docs:
         # http://openvswitch.org/support/dist-docs/ovs-vswitchd.conf.db.5.html
@@ -148,6 +161,7 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
                                                     max_burst_kbps)
 
     def _update_ingress_bandwidth_limit(self, vif_port, rule):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         port_name = vif_port.port_name
         max_kbps = rule.max_kbps or 0
         max_burst_kbps = rule.max_burst_kbps or 0
@@ -159,9 +173,11 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
         )
 
     def create_minimum_bandwidth(self, port, rule):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.update_minimum_bandwidth(port, rule)
 
     def update_minimum_bandwidth(self, port, rule):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         vif_port = port.get('vif_port')
         if not vif_port:
             LOG.debug('update_minimum_bandwidth was received for port %s but '
@@ -187,10 +203,12 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
                    'qos_id': qos_id, 'ports': egress_port_names})
 
     def delete_minimum_bandwidth(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.br_int.delete_minimum_bandwidth_queue(port['port_id'])
         LOG.debug("Minimum bandwidth rule was deleted for port: %s.",
                   port['port_id'])
 
     def delete_minimum_bandwidth_ingress(self, port):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         LOG.debug("Minimum bandwidth rule for ingress direction was deleted "
                   "for port %s", port['port_id'])

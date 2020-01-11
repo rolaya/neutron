@@ -34,6 +34,7 @@ import six
 from neutron._i18n import _
 from neutron.agent.common import ovs_lib
 from neutron.common import utils
+from neutron.common import log_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -46,7 +47,7 @@ class ActiveBundleRunning(exceptions.NeutronException):
 
 
 class OpenFlowSwitchMixin(object):
-    LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Mixin to provide common convenient routines for an openflow switch.
 
     NOTE(yamamoto): super() points to ovs_lib.OVSBridge.
@@ -55,20 +56,20 @@ class OpenFlowSwitchMixin(object):
 
     @staticmethod
     def _cidr_to_os_ken(ip):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         n = netaddr.IPNetwork(ip)
         if n.hostmask:
             return (str(n.ip), str(n.netmask))
         return str(n.ip)
 
     def __init__(self, *args, **kwargs):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self._app = kwargs.pop('os_ken_app')
         self.active_bundles = set()
         super(OpenFlowSwitchMixin, self).__init__(*args, **kwargs)
 
     def _get_dp_by_dpid(self, dpid_int):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Get os-ken datapath object for the switch."""
         timeout_sec = cfg.CONF.OVS.of_connect_timeout
         start_time = timeutils.now()
@@ -88,8 +89,8 @@ class OpenFlowSwitchMixin(object):
 
     def _send_msg(self, msg, reply_cls=None, reply_multi=False,
                   active_bundle=None):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
-        LOG.info(utils.get_fname(1) +"(): send message: %(request)s", {"request": msg})
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
+        LOG.info(log_utils.get_fname(1) +"(): send message: %(request)s", {"request": msg})
 
         timeout_sec = cfg.CONF.OVS.of_request_timeout
         timeout = eventlet.Timeout(seconds=timeout_sec)
@@ -125,7 +126,7 @@ class OpenFlowSwitchMixin(object):
 
     @staticmethod
     def _match(_ofp, ofpp, match, **match_kwargs):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if match is not None:
             return match
         return ofpp.OFPMatch(**match_kwargs)
@@ -133,7 +134,7 @@ class OpenFlowSwitchMixin(object):
     def uninstall_flows(self, table_id=None, strict=False, priority=0,
                         cookie=COOKIE_DEFAULT, cookie_mask=0,
                         match=None, active_bundle=None, **match_kwargs):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         (dp, ofp, ofpp) = self._get_dp()
         if table_id is None:
             table_id = ofp.OFPTT_ALL
@@ -165,7 +166,7 @@ class OpenFlowSwitchMixin(object):
         self._send_msg(msg, active_bundle=active_bundle)
 
     def dump_flows(self, table_id=None):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         (dp, ofp, ofpp) = self._get_dp()
         if table_id is None:
             table_id = ofp.OFPTT_ALL
@@ -179,7 +180,7 @@ class OpenFlowSwitchMixin(object):
         return flows
 
     def _dump_and_clean(self, table_id=None):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         cookies = set([f.cookie for f in self.dump_flows(table_id)]) - \
                       self.reserved_cookies
         for c in cookies:
@@ -188,7 +189,7 @@ class OpenFlowSwitchMixin(object):
             self.uninstall_flows(cookie=c, cookie_mask=ovs_lib.UINT64_BITMASK)
 
     def cleanup_flows(self):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         LOG.info("Reserved cookies for %s: %s", self.br_name,
                  self.reserved_cookies)
 
@@ -196,13 +197,13 @@ class OpenFlowSwitchMixin(object):
             self._dump_and_clean(table_id)
 
     def install_goto_next(self, table_id, active_bundle=None):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.install_goto(table_id=table_id, dest_table_id=table_id + 1,
                           active_bundle=active_bundle)
 
     def install_output(self, port, table_id=0, priority=0,
                        match=None, **match_kwargs):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         (_dp, ofp, ofpp) = self._get_dp()
         actions = [ofpp.OFPActionOutput(port, 0)]
         instructions = [ofpp.OFPInstructionActions(
@@ -213,7 +214,7 @@ class OpenFlowSwitchMixin(object):
 
     def install_normal(self, table_id=0, priority=0,
                        match=None, **match_kwargs):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         (_dp, ofp, _ofpp) = self._get_dp()
         self.install_output(port=ofp.OFPP_NORMAL,
                             table_id=table_id, priority=priority,
@@ -221,7 +222,7 @@ class OpenFlowSwitchMixin(object):
 
     def install_goto(self, dest_table_id, table_id=0, priority=0,
                      match=None, **match_kwargs):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         (_dp, _ofp, ofpp) = self._get_dp()
         instructions = [ofpp.OFPInstructionGotoTable(table_id=dest_table_id)]
         self.install_instructions(table_id=table_id, priority=priority,
@@ -229,14 +230,14 @@ class OpenFlowSwitchMixin(object):
                                   match=match, **match_kwargs)
 
     def install_drop(self, table_id=0, priority=0, match=None, **match_kwargs):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.install_instructions(table_id=table_id, priority=priority,
                                   instructions=[], match=match, **match_kwargs)
 
     def install_instructions(self, instructions,
                              table_id=0, priority=0,
                              match=None, active_bundle=None, **match_kwargs):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         (dp, ofp, ofpp) = self._get_dp()
         match = self._match(ofp, ofpp, match, **match_kwargs)
         if isinstance(instructions, six.string_types):
@@ -257,7 +258,7 @@ class OpenFlowSwitchMixin(object):
     def install_apply_actions(self, actions,
                               table_id=0, priority=0,
                               match=None, **match_kwargs):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         (dp, ofp, ofpp) = self._get_dp()
         instructions = [
             ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, actions),
@@ -269,14 +270,14 @@ class OpenFlowSwitchMixin(object):
                                   **match_kwargs)
 
     def bundled(self, atomic=False, ordered=False):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return BundledOpenFlowBridge(self, atomic, ordered)
 
 
 class BundledOpenFlowBridge(object):
-    LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     def __init__(self, br, atomic, ordered):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.br = br
         self.active_bundle = None
         self.bundle_flags = 0
@@ -289,7 +290,7 @@ class BundledOpenFlowBridge(object):
             self.bundle_flags |= ofp.ONF_BF_ORDERED
 
     def __getattr__(self, name):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if name.startswith('install') or name.startswith('uninstall'):
             under = getattr(self.br, name)
             if self.active_bundle is None:
@@ -300,7 +301,7 @@ class BundledOpenFlowBridge(object):
                                "can be used"))
 
     def __enter__(self):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if self.active_bundle is not None:
             raise ActiveBundleRunning(bundle_id=self.active_bundle)
         while True:
@@ -325,7 +326,7 @@ class BundledOpenFlowBridge(object):
             raise
 
     def __exit__(self, type, value, traceback):
-        LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         (dp, ofp, ofpp) = self.br._get_dp()
         if type is None:
             ctrl_type = ofp.ONF_BCT_COMMIT_REQUEST

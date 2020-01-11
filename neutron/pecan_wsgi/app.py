@@ -18,19 +18,19 @@ import pecan
 from neutron.pecan_wsgi.controllers import root
 from neutron.pecan_wsgi import hooks
 from neutron.pecan_wsgi import startup
-from neutron.common import utils
+from neutron.common import log_utils
 from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
 
 
 def versions_factory(global_config, **local_config):
-    LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     return pecan.make_app(root.RootController())
 
 
 def v2_factory(global_config, **local_config):
-    LOG.info('%s(): caller(): %s', utils.get_fname(1), utils.get_fname(2))
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # Processing Order:
     #   As request enters lower priority called before higher.
     #   Response from controller is passed from higher priority to lower.

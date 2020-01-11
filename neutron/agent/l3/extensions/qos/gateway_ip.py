@@ -26,14 +26,17 @@ from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.common import coordination
+from neutron.common import log_utils
 
 LOG = logging.getLogger(__name__)
 
 
 class RouterGatewayIPQosAgentExtension(qos_base.L3QosAgentExtensionBase,
                                        l3_extension.L3AgentExtension):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def initialize(self, connection, driver_type):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Initialize agent extension."""
         self.resource_rpc = resources_rpc.ResourcesPullRpcApi()
         self._register_rpc_consumers()
@@ -42,12 +45,14 @@ class RouterGatewayIPQosAgentExtension(qos_base.L3QosAgentExtensionBase,
 
     def _handle_notification(self, context, resource_type,
                              qos_policies, event_type):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if event_type == events.UPDATED:
             for qos_policy in qos_policies:
                 self._process_update_policy(qos_policy)
 
     def _process_router_gateway_after_policy_update(
             self, router_id, qos_policy):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         router_info = self._get_router_info(router_id)
         if not router_info:
             return
@@ -71,6 +76,7 @@ class RouterGatewayIPQosAgentExtension(qos_base.L3QosAgentExtensionBase,
             ex_gw_port, rates)
 
     def _process_update_policy(self, qos_policy):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         old_qos_policy = self.gateway_ip_qos_map.get_policy(qos_policy.id)
         if old_qos_policy:
             if self._policy_rules_modified(old_qos_policy, qos_policy):
@@ -82,16 +88,19 @@ class RouterGatewayIPQosAgentExtension(qos_base.L3QosAgentExtensionBase,
             self.gateway_ip_qos_map.update_policy(qos_policy)
 
     def add_router(self, context, data):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         router_info = self._get_router_info(data['id'])
         if router_info:
             self.process_gateway_rate_limit(context, router_info)
 
     def update_router(self, context, data):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         router_info = self._get_router_info(data['id'])
         if router_info:
             self.process_gateway_rate_limit(context, router_info)
 
     def delete_router(self, context, data):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # Remove the router and policy map in case the router deletion with
         # gateway.
         self.gateway_ip_qos_map.clean_by_resource(data['id'])
@@ -100,6 +109,7 @@ class RouterGatewayIPQosAgentExtension(qos_base.L3QosAgentExtensionBase,
         pass
 
     def process_gateway_rate_limit(self, context, router_info):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         is_distributed_router = router_info.router.get('distributed')
         agent_mode = router_info.agent_conf.agent_mode
         LOG.debug("Start processing gateway IP QoS for "
@@ -120,6 +130,7 @@ class RouterGatewayIPQosAgentExtension(qos_base.L3QosAgentExtensionBase,
 
     @coordination.synchronized('qos-gateway-ip-{router_info.router_id}')
     def _empty_router_gateway_rate_limits(self, router_info, tc_wrapper):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.gateway_ip_qos_map.clean_by_resource(router_info.router_id)
         for ip in router_info.qos_gateway_ips:
             for direction in constants.VALID_DIRECTIONS:
@@ -127,6 +138,7 @@ class RouterGatewayIPQosAgentExtension(qos_base.L3QosAgentExtensionBase,
         router_info.qos_gateway_ips.clear()
 
     def _handle_router_gateway_rate_limit(self, context, router_info):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         ex_gw_port = router_info.get_ex_gw_port()
         if not ex_gw_port:
             return
@@ -148,6 +160,7 @@ class RouterGatewayIPQosAgentExtension(qos_base.L3QosAgentExtensionBase,
         self._set_gateway_tc_rules(router_info, tc_wrapper, ex_gw_port, rates)
 
     def _get_gateway_tc_rule_device(self, router_info, interface_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         is_distributed_router = router_info.router.get('distributed')
         agent_mode = router_info.agent_conf.agent_mode
         namespace = router_info.ns_name
@@ -157,6 +170,7 @@ class RouterGatewayIPQosAgentExtension(qos_base.L3QosAgentExtensionBase,
         return ip_lib.IPDevice(interface_name, namespace=namespace)
 
     def _get_rates_by_policy(self, context, router_info):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         gateway_info = router_info.router.get('external_gateway_info')
         if not gateway_info:
             return
@@ -174,6 +188,7 @@ class RouterGatewayIPQosAgentExtension(qos_base.L3QosAgentExtensionBase,
     @coordination.synchronized('qos-gateway-ip-{router_info.router_id}')
     def _set_gateway_tc_rules(self, router_info, tc_wrapper,
                               ex_gw_port, rates):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         for ip_addr in ex_gw_port['fixed_ips']:
             ex_gw_ip = ip_addr['ip_address']
             ip_ver = netaddr.IPAddress(ex_gw_ip).version
@@ -182,6 +197,7 @@ class RouterGatewayIPQosAgentExtension(qos_base.L3QosAgentExtensionBase,
                 router_info.qos_gateway_ips.add(ex_gw_ip)
 
     def _set_gateway_ip_rate_limit(self, tc_wrapper, ex_gw_ip, rates):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         for direction in constants.VALID_DIRECTIONS:
             rate = rates.get(direction)
             if (rate['rate'] == qos_base.IP_DEFAULT_RATE and

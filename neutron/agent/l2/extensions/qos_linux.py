@@ -15,11 +15,15 @@
 
 from neutron.agent.l2.extensions import qos
 from neutron.agent.linux import tc_lib
+from neutron.common import log_utils
 
+LOG = logging.getLogger(__name__)
 
 class QosLinuxAgentDriver(qos.QosAgentDriver):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def _get_egress_burst_value(self, rule):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Return burst value used for egress bandwidth limitation.
 
         Because Egress bw_limit is done on ingress qdisc by LB and ovs drivers

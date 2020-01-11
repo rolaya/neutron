@@ -20,7 +20,7 @@ from oslo_log import log as logging
 
 from neutron._i18n import _
 from neutron.agent.linux import utils
-
+from neutron.common import log_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -47,6 +47,7 @@ class IpLinkConstants(object):
 
 
 class IpLinkSupport(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     VF_BLOCK_REGEX = r"\[ vf NUM(?P<vf_block>.*) \] \]"
 
     CAPABILITY_REGEX = r"\[ %s (.*)"
@@ -54,6 +55,7 @@ class IpLinkSupport(object):
 
     @classmethod
     def get_vf_mgmt_section(cls):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Parses ip link help output, and gets vf block"""
 
         output = cls._get_ip_link_output()
@@ -66,6 +68,7 @@ class IpLinkSupport(object):
     @classmethod
     def vf_mgmt_capability_supported(cls, vf_section, capability,
                                      subcapability=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Validate vf capability support
 
         Checks if given vf capability (and sub capability
@@ -87,6 +90,7 @@ class IpLinkSupport(object):
 
     @classmethod
     def _get_ip_link_output(cls):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Gets the output of the ip link help command
 
         Runs ip link help command and stores its output

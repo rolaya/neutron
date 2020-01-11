@@ -23,12 +23,14 @@ from neutron.agent.l2.extensions import qos as qos_extension
 from neutron.services.trunk.drivers.openvswitch.agent \
     import driver as trunk_driver
 from neutron.tests.common.agents import ovs_agent
-
+from neutron.common import log_utils
 
 def monkeypatch_init_handler():
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     original_handler = trunk_driver.init_handler
 
     def new_init_handler(resource, event, trigger, payload=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # NOTE(slaweq): make this setup conditional based on server-side
         # capabilities for fullstack tests we can assume that server-side
         # and agent-side conf are in sync
@@ -40,6 +42,7 @@ def monkeypatch_init_handler():
 
 
 def monkeypatch_qos():
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     mock.patch.object(ovs_lib.OVSBridge, 'clear_minimum_bandwidth_qos').start()
     if "qos" in cfg.CONF.service_plugins:
         mock.patch.object(qos_extension.QosAgentExtension,
@@ -47,6 +50,7 @@ def monkeypatch_qos():
 
 
 def main():
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     # TODO(slaweq): this monkepatch will not be necessary when
     # https://review.opendev.org/#/c/506722/ will be merged and ovsdb-server
     # ovs-vswitchd processes for each test will be isolated in separate
