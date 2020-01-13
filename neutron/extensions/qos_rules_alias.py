@@ -12,12 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log as logging
 from neutron_lib.api.definitions import qos_rules_alias as apidef
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib.plugins import constants
 
 from neutron.api.v2 import resource_helper
-from neutrong.common import log_utils
+from neutron.common import log_utils
 
 LOG = logging.getLogger(__name__)
 

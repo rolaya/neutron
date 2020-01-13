@@ -29,6 +29,7 @@ import six
 from neutron._i18n import _
 from neutron.common import utils
 from neutron.plugins.common import constants
+from neutron.common import log_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -42,12 +43,14 @@ class ManagerMeta(profiler.TracedMeta, type(periodic_task.PeriodicTasks)):
 
 @six.add_metaclass(ManagerMeta)
 class Manager(periodic_task.PeriodicTasks):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     __trace_args__ = {"name": "rpc"}
 
     # Set RPC API version to 1.0 by default.
     target = oslo_messaging.Target(version='1.0')
 
     def __init__(self, host=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not host:
             host = cfg.CONF.host
         self.host = host
@@ -55,9 +58,11 @@ class Manager(periodic_task.PeriodicTasks):
         super(Manager, self).__init__(conf)
 
     def periodic_tasks(self, context, raise_on_error=False):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.run_periodic_tasks(context, raise_on_error=raise_on_error)
 
     def init_host(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Handle initialization if this is a standalone service.
 
         Child classes should override this method.
@@ -74,6 +79,7 @@ class Manager(periodic_task.PeriodicTasks):
 
 
 def validate_pre_plugin_load():
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Checks if the configuration variables are valid.
 
     If the configuration is invalid then the method will return an error
@@ -86,6 +92,7 @@ def validate_pre_plugin_load():
 
 @six.add_metaclass(profiler.TracedMeta)
 class NeutronManager(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Neutron's Manager class.
 
     Neutron's Manager class is responsible for parsing a config file and
@@ -100,6 +107,7 @@ class NeutronManager(object):
     __trace_args__ = {"name": "rpc"}
 
     def __init__(self, options=None, config_file=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # Store instances of already loaded plugins to avoid instantiate same
         # plugin more than once
         self._loaded_plugins = {}
@@ -129,10 +137,12 @@ class NeutronManager(object):
         # Used by pecan WSGI
         self.resource_plugin_mappings = {}
         self.resource_controller_mappings = {}
+        self.resource_name_mappings = {}
         self.path_prefix_resource_mappings = defaultdict(list)
 
     @staticmethod
     def load_class_for_provider(namespace, plugin_provider):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Loads plugin using alias or class name
 
         :param namespace: namespace where alias is defined
@@ -149,9 +159,11 @@ class NeutronManager(object):
                 LOG.error("Plugin '%s' not found.", plugin_provider)
 
     def _get_plugin_class(self, namespace, plugin_provider):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.load_class_for_provider(namespace, plugin_provider)
 
     def _get_plugin_instance(self, namespace, plugin_provider):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         plugin_class = self._get_plugin_class(namespace, plugin_provider)
         plugin_inst = self._loaded_plugins.get(plugin_class)
         if not plugin_inst:
@@ -160,6 +172,7 @@ class NeutronManager(object):
         return plugin_inst
 
     def _load_services_from_core_plugin(self, plugin):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Puts core plugin in service_plugins for supported services."""
         LOG.debug("Loading services supported by the core plugin")
 
@@ -172,6 +185,7 @@ class NeutronManager(object):
                          service_type)
 
     def _get_default_service_plugins(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Get default service plugins to be loaded."""
         core_plugin = directory.get_plugin()
         if core_plugin.has_native_datastore():
@@ -180,6 +194,7 @@ class NeutronManager(object):
             return []
 
     def _load_service_plugins(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Loads service plugins.
 
         Starts from the core plugin and checks if it supports
@@ -207,6 +222,7 @@ class NeutronManager(object):
             self._create_and_add_service_plugin(provider)
 
     def _create_and_add_service_plugin(self, provider):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         plugin_inst = self._get_plugin_instance('neutron.service_plugins',
                                                 provider)
         plugin_type = plugin_inst.get_plugin_type()
@@ -230,39 +246,79 @@ class NeutronManager(object):
     @classmethod
     @runtime.synchronized("manager")
     def _create_instance(cls):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not cls.has_instance():
             cls._instance = cls()
 
     @classmethod
     def has_instance(cls):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return cls._instance is not None
 
     @classmethod
     def clear_instance(cls):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         cls._instance = None
 
     @classmethod
     def get_instance(cls):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # double checked locking
         if not cls.has_instance():
             cls._create_instance()
         return cls._instance
 
     @classmethod
+    def set_resource_name(cls, resource, name):
+        
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
+        LOG.info('resource: %s', name)
+
+        cls.get_instance().resource_name_mappings[resource] = name
+
+    @classmethod
+    def get_resource_name(cls, resource):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
+        return cls.get_instance().resource_name_mappings.get(resource)    
+
+    @classmethod
+    def show_resource_controller_map(cls):
+        
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
+
+        map = cls.get_instance().resource_name_mappings
+
+        for map_entry in map:
+            LOG.info('resource name: %s', map_entry.name)
+
+        #cls.get_instance().resource_controller_mappings[resource] = controller            
+
+    @classmethod
     def set_plugin_for_resource(cls, resource, plugin):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
+        LOG.info('reource: %s()', resource)
+
         cls.get_instance().resource_plugin_mappings[resource] = plugin
 
     @classmethod
     def get_plugin_for_resource(cls, resource):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return cls.get_instance().resource_plugin_mappings.get(resource)
 
     @classmethod
     def set_controller_for_resource(cls, resource, controller):
+        
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
+        LOG.info('resource: %s', resource)
+
         cls.get_instance().resource_controller_mappings[resource] = controller
 
     @classmethod
     def get_controller_for_resource(cls, resource):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
+        LOG.info('base resource: %s', resource)
         resource = resource.replace('_', '-')
+        LOG.info('actual resource: %s', resource)
         res_ctrl_mappings = cls.get_instance().resource_controller_mappings
         # If no controller is found for resource, try replacing dashes with
         # underscores
@@ -274,6 +330,7 @@ class NeutronManager(object):
     # probably should be removed
     @classmethod
     def get_service_plugin_by_path_prefix(cls, path_prefix):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         service_plugins = directory.get_unique_plugins()
         for service_plugin in service_plugins:
             plugin_path_prefix = getattr(service_plugin, 'path_prefix', None)
@@ -282,16 +339,19 @@ class NeutronManager(object):
 
     @classmethod
     def add_resource_for_path_prefix(cls, resource, path_prefix):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         resources = cls.get_instance().path_prefix_resource_mappings[
             path_prefix].append(resource)
         return resources
 
     @classmethod
     def get_resources_for_path_prefix(cls, path_prefix):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return cls.get_instance().path_prefix_resource_mappings[path_prefix]
 
 
 def init():
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Call to load the plugins (core+services) machinery."""
     if not directory.is_loaded():
         NeutronManager.get_instance()

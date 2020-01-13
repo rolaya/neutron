@@ -46,7 +46,7 @@ def v2_factory(global_config, **local_config):
         hooks.PolicyHook(),  # priority 140
     ]
     app = pecan.make_app(root.V2Controller(),
-                         debug=False,
+                         debug=True,
                          force_canonical=False,
                          hooks=app_hooks,
                          guess_content_type_from_ext=True)

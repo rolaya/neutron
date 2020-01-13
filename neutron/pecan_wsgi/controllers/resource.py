@@ -20,15 +20,18 @@ import webob
 from neutron._i18n import _
 from neutron import manager
 from neutron.pecan_wsgi.controllers import utils
+from neutron.common import log_utils
 
 
 LOG = logging.getLogger(__name__)
 
 
 class ItemController(utils.NeutronPecanController):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def __init__(self, resource, item, plugin=None, resource_info=None,
                  parent_resource=None, member_actions=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         super(ItemController, self).__init__(None, resource, plugin=plugin,
                                              resource_info=resource_info,
                                              parent_resource=parent_resource,
@@ -37,9 +40,11 @@ class ItemController(utils.NeutronPecanController):
 
     @utils.expose(generic=True)
     def index(self, *args, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.get(*args, **kwargs)
 
     def get(self, *args, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         neutron_context = request.context['neutron_context']
         getter_args = [neutron_context, self.item]
         # NOTE(tonytan4ever): This implicitly forces the getter method
@@ -54,10 +59,12 @@ class ItemController(utils.NeutronPecanController):
     @utils.when(index, method='POST')
     @utils.when(index, method='PATCH')
     def not_supported(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         pecan.abort(405)
 
     @utils.when(index, method='PUT')
     def put(self, *args, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         neutron_context = request.context['neutron_context']
         if "resources" not in request.context:
             msg = (_("Unable to find '%s' in request body") %
@@ -75,6 +82,7 @@ class ItemController(utils.NeutronPecanController):
 
     @utils.when_delete(index)
     def delete(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if request.body:
             msg = _("Request body is not supported in DELETE.")
             raise webob.exc.HTTPBadRequest(msg)
@@ -86,6 +94,7 @@ class ItemController(utils.NeutronPecanController):
 
     @utils.expose()
     def _lookup(self, collection, *remainder):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         request.context['collection'] = collection
         collection_path = '/'.join([self.resource, collection])
         controller = manager.NeutronManager.get_controller_for_resource(
@@ -113,11 +122,13 @@ class ItemController(utils.NeutronPecanController):
 
 
 class CollectionsController(utils.NeutronPecanController):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     item_controller_class = ItemController
 
     @utils.expose()
     def _lookup(self, item, *remainder):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # Store resource identifier in request context
         request.context['resource_id'] = item
         uri_identifier = '%s_id' % self.resource
@@ -132,9 +143,11 @@ class CollectionsController(utils.NeutronPecanController):
 
     @utils.expose(generic=True)
     def index(self, *args, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self.get(*args, **kwargs)
 
     def get(self, *args, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # NOTE(blogan): these are set in the FieldsAndFiltersHoook
         query_params = request.context['query_params']
         neutron_context = request.context['neutron_context']
@@ -153,6 +166,7 @@ class CollectionsController(utils.NeutronPecanController):
 
     @utils.when(index, method='POST')
     def post(self, *args, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if 'resources' not in request.context:
             # user didn't specify any body, which is invalid for collections
             msg = (_("Unable to find '%s' in request body") %
@@ -163,6 +177,7 @@ class CollectionsController(utils.NeutronPecanController):
         return self.create(resources)
 
     def create(self, resources):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if request.context['is_bulk']:
             # Bulk!
             creator = self.plugin_bulk_creator
@@ -184,6 +199,7 @@ class CollectionsController(utils.NeutronPecanController):
 class MemberActionController(ItemController):
     @property
     def plugin_shower(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # NOTE(blogan): Do an explicit check for the _show_action because
         # pecan will see the plugin_shower property as a possible custom route
         # and try to evaluate it, which causes the code block to be executed.
@@ -194,11 +210,13 @@ class MemberActionController(ItemController):
 
     @property
     def plugin_updater(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if self._update_action:
             return getattr(self.plugin, self._update_action)
 
     def __init__(self, resource, item, parent_controller, plugin=None,
                  resource_info=None, show_action=None, update_action=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         super(MemberActionController, self).__init__(
             resource, item, plugin=plugin, resource_info=resource_info)
         self._show_action = show_action
@@ -207,6 +225,7 @@ class MemberActionController(ItemController):
 
     @utils.expose(generic=True)
     def index(self, *args, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not self._show_action:
             pecan.abort(405)
         neutron_context = request.context['neutron_context']
@@ -216,6 +235,7 @@ class MemberActionController(ItemController):
 
     @utils.when(index, method='PUT')
     def put(self, *args, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not self._update_action:
             LOG.debug("Action %(action)s is not defined on resource "
                       "%(resource)s",
@@ -236,4 +256,5 @@ class MemberActionController(ItemController):
     @utils.when(index, method='PATCH')
     @utils.when(index, method='DELETE')
     def not_supported(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return super(MemberActionController, self).not_supported()

@@ -17,6 +17,7 @@ import six
 
 from neutron._i18n import _
 from neutron.quota import resource
+from neutron.common import log_utils
 
 LOG = log.getLogger(__name__)
 
@@ -25,29 +26,37 @@ LOG = log.getLogger(__name__)
 
 
 def register_resource(resource):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     ResourceRegistry.get_instance().register_resource(resource)
 
 
 def register_resource_by_name(resource_name, plural_name=None):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
+    LOG.info('resource name: %s', resource_name)
+
     ResourceRegistry.get_instance().register_resource_by_name(
         resource_name, plural_name)
 
 
 def get_all_resources():
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     return ResourceRegistry.get_instance().resources
 
 
 def unregister_all_resources():
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     if not ResourceRegistry._instance:
         return
     return ResourceRegistry.get_instance().unregister_resources()
 
 
 def get_resource(resource_name):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     return ResourceRegistry.get_instance().get_resource(resource_name)
 
 
 def is_tracked(resource_name):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     return ResourceRegistry.get_instance().is_tracked(resource_name)
 
 
@@ -55,6 +64,7 @@ def is_tracked(resource_name):
 
 
 def set_resources_dirty(context):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Sets the dirty bit for resources with usage changes.
 
     This routine scans all registered resources, and, for those whose
@@ -73,6 +83,7 @@ def set_resources_dirty(context):
 
 
 def resync_resource(context, resource_name, tenant_id):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     if not cfg.CONF.QUOTAS.track_quota_usage:
         return
 
@@ -83,6 +94,7 @@ def resync_resource(context, resource_name, tenant_id):
 
 
 def mark_resources_dirty(f):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Decorator for functions which alter resource usage.
 
     This decorator ensures set_resource_dirty is invoked after completion
@@ -99,6 +111,7 @@ def mark_resources_dirty(f):
 
 
 class tracked_resources(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Decorator for specifying resources for which usage should be tracked.
 
     A plugin class can use this decorator to specify for which resources
@@ -107,10 +120,12 @@ class tracked_resources(object):
     """
 
     def __init__(self, override=False, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self._tracked_resources = kwargs
         self._override = override
 
     def __call__(self, f):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
         @six.wraps(f)
         def wrapper(*args, **kwargs):
@@ -126,6 +141,7 @@ class tracked_resources(object):
 
 
 class ResourceRegistry(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Registry for resource subject to quota limits.
 
     This class keeps track of Neutron resources for which quota limits are
@@ -142,19 +158,23 @@ class ResourceRegistry(object):
 
     @classmethod
     def get_instance(cls):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
     def __init__(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self._resources = {}
         # Map usage tracked resources to the correspondent db model class
         self._tracked_resource_mappings = {}
 
     def __contains__(self, resource):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return resource in self._resources
 
     def _create_resource_instance(self, resource_name, plural_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Factory function for quota Resource.
 
         This routine returns a resource instance of the appropriate type
@@ -181,6 +201,7 @@ class ResourceRegistry(object):
                 'quota_%s' % resource_name)
 
     def set_tracked_resource(self, resource_name, model_class, override=False):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # Do not do anything if tracking is disabled by config
         if not cfg.CONF.QUOTAS.track_quota_usage:
             return
@@ -205,6 +226,7 @@ class ResourceRegistry(object):
                   resource_name)
 
     def is_tracked(self, resource_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Find out if a resource if tracked or not.
 
         :param resource_name: name of the resource.
@@ -217,6 +239,7 @@ class ResourceRegistry(object):
         return resource_name in self._tracked_resource_mappings
 
     def register_resource(self, resource):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if resource.name in self._resources:
             LOG.warning('%s is already registered', resource.name)
         if resource.name in self._tracked_resource_mappings:
@@ -229,12 +252,14 @@ class ResourceRegistry(object):
 
     def register_resource_by_name(self, resource_name,
                                   plural_name=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Register a resource by name."""
         resource = self._create_resource_instance(
             resource_name, plural_name)
         self.register_resource(resource)
 
     def unregister_resources(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Unregister all resources."""
         for (res_name, res) in self._resources.items():
             if res_name in self._tracked_resource_mappings:
@@ -243,6 +268,7 @@ class ResourceRegistry(object):
         self._tracked_resource_mappings.clear()
 
     def get_resource(self, resource_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         """Return a resource given its name.
 
         :returns: The resource instance or None if the resource is not found
@@ -251,4 +277,5 @@ class ResourceRegistry(object):
 
     @property
     def resources(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self._resources

@@ -18,6 +18,8 @@ from neutron_lib.api.definitions import network as net_def
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import subnet as subnet_def
 from neutron_lib.api.definitions import subnetpool as subnetpool_def
+#from neutron_lib.api.definitions import qos as qos_def
+
 from oslo_config import cfg
 from oslo_log import log
 import pecan
@@ -29,6 +31,7 @@ from neutron.api.views import versions as versions_view
 from neutron import manager
 from neutron.pecan_wsgi.controllers import extensions as ext_ctrl
 from neutron.pecan_wsgi.controllers import utils
+from neutron.common import log_utils
 
 
 CONF = cfg.CONF
@@ -37,12 +40,12 @@ LOG = log.getLogger(__name__)
 _VERSION_INFO = {}
 _CORE_RESOURCES = {net_def.RESOURCE_NAME: net_def.COLLECTION_NAME,
                    subnet_def.RESOURCE_NAME: subnet_def.COLLECTION_NAME,
-                   subnetpool_def.RESOURCE_NAME:
-                       subnetpool_def.COLLECTION_NAME,
+                   subnetpool_def.RESOURCE_NAME: subnetpool_def.COLLECTION_NAME,
                    port_def.RESOURCE_NAME: port_def.COLLECTION_NAME}
 
 
 def _load_version_info(version_info):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     if version_info['id'] in _VERSION_INFO:
         raise AssertionError(_("ID %s must not be in "
                                "VERSION_INFO") % version_info['id'])
@@ -50,13 +53,16 @@ def _load_version_info(version_info):
 
 
 def _get_version_info():
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     return _VERSION_INFO.values()
 
 
 class RootController(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     @utils.expose(generic=True)
     def index(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         version_objs = [
             {
                 "id": "v2.0",
@@ -77,6 +83,7 @@ class RootController(object):
 
 
 class V2Controller(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     # Same data structure as neutron.api.versions.Versions for API backward
     # compatibility
@@ -95,6 +102,7 @@ class V2Controller(object):
 
     @utils.expose(generic=True)
     def index(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not pecan.request.path_url.endswith('/'):
             pecan.abort(404)
 
@@ -118,6 +126,7 @@ class V2Controller(object):
 
     @utils.expose()
     def _lookup(self, collection, *remainder):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # if collection exists in the extension to service plugins map then
         # we are assuming that collection is the service plugin and
         # needs to be remapped.

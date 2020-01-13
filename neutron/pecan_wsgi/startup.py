@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log
 from neutron_lib.api import attributes
 from neutron_lib.plugins import directory
 
@@ -23,6 +24,9 @@ from neutron.pecan_wsgi.controllers import resource as res_ctrl
 from neutron.pecan_wsgi.controllers import utils
 from neutron import policy
 from neutron.quota import resource_registry
+from neutron.common import log_utils
+
+LOG = log.getLogger(__name__)
 
 
 # NOTE(blogan): This currently already exists in neutron.api.v2.router but
@@ -35,13 +39,18 @@ RESOURCES = {'network': 'networks',
              'port': 'ports'}
 
 
+#rolaya: 
 def initialize_all():
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     manager.init()
     ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
     ext_mgr.extend_resources("2.0", attributes.RESOURCES)
     # At this stage we have a fully populated resource attribute map;
     # build Pecan controllers and routes for all core resources
     plugin = directory.get_plugin()
+
+    LOG.info('%s(): processing: RESOURCES', log_utils.get_fname(1))
+
     for resource, collection in RESOURCES.items():
         resource_registry.register_resource_by_name(resource)
         new_controller = res_ctrl.CollectionsController(collection, resource,
@@ -49,6 +58,9 @@ def initialize_all():
         manager.NeutronManager.set_controller_for_resource(
             collection, new_controller)
         manager.NeutronManager.set_plugin_for_resource(collection, plugin)
+        manager.NeutronManager.set_resource_name(collection, collection)
+
+    LOG.info('%s(): processing: pecanized_resources', log_utils.get_fname(1))
 
     pecanized_resources = ext_mgr.get_pecan_resources()
     for pec_res in pecanized_resources:
@@ -56,14 +68,21 @@ def initialize_all():
             pec_res.collection, pec_res.controller)
         manager.NeutronManager.set_plugin_for_resource(
             pec_res.collection, pec_res.plugin)
+        manager.NeutronManager.set_resource_name(pec_res.collection, pec_res.collection)
 
     # Now build Pecan Controllers and routes for all extensions
     resources = ext_mgr.get_resources()
     # Extensions controller is already defined, we don't need it.
     resources.pop(0)
+
+    LOG.info('%s(): processing: ext_mgr.get_resources', log_utils.get_fname(1))
+
     for ext_res in resources:
         path_prefix = ext_res.path_prefix.strip('/')
         collection = ext_res.collection
+        
+        LOG.info('resource path: %s', path_prefix)
+
         # Retrieving the parent resource.  It is expected the format of
         # the parent resource to be:
         # {'collection_name': 'name-of-collection',
@@ -72,9 +91,14 @@ def initialize_all():
         # inside the controller logic, so we can assume we do not need it.
         parent = ext_res.parent or {}
         parent_resource = parent.get('member_name')
+
+        LOG.info('parent resource: %s', parent_resource)
+
         collection_key = collection
         if parent_resource:
             collection_key = '/'.join([parent_resource, collection])
+            LOG.info('collections key: %s', collection_key)
+
         collection_actions = ext_res.collection_actions
         member_actions = ext_res.member_actions
         if manager.NeutronManager.get_controller_for_resource(collection_key):
@@ -118,6 +142,10 @@ def initialize_all():
 
         manager.NeutronManager.set_controller_for_resource(
             collection_key, new_controller)
+        
+        manager.NeutronManager.set_resource_name(collection_key, collection_key)
+
+    #manager.NeutronManager.show_resource_controller_map()
 
     # Certain policy checks require that the extensions are loaded
     # and the RESOURCE_ATTRIBUTE_MAP populated before they can be

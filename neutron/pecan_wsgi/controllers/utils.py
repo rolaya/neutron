@@ -29,6 +29,7 @@ from neutron._i18n import _
 from neutron.api import api_common
 from neutron import manager
 from neutron_lib import exceptions
+from neutron.common import log_utils
 
 # Utility functions for Pecan controllers.
 
@@ -40,9 +41,11 @@ class Fakecode(object):
 
 
 def _composed(*decorators):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Takes a list of decorators and returns a single decorator."""
 
     def final_decorator(f):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         for d in decorators:
             # workaround for pecan bug that always assumes decorators
             # have a __code__ attr
@@ -54,10 +57,12 @@ def _composed(*decorators):
 
 
 def _protect_original_resources(f):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Wrapper to ensure that mutated resources are discarded on retries."""
 
     @functools.wraps(f)
     def wrapped(*args, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         ctx = request.context
         if 'resources' in ctx:
             orig = ctx.get('protected_resources')
@@ -78,6 +83,7 @@ def _protect_original_resources(f):
 
 
 def _pecan_generator_wrapper(func, *args, **kwargs):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Helper function so we don't have to specify json for everything."""
     kwargs.setdefault('content_type', 'application/json')
     kwargs.setdefault('template', 'json')
@@ -86,20 +92,24 @@ def _pecan_generator_wrapper(func, *args, **kwargs):
 
 
 def expose(*args, **kwargs):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     return _pecan_generator_wrapper(pecan.expose, *args, **kwargs)
 
 
 def when(index, *args, **kwargs):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     return _pecan_generator_wrapper(index.when, *args, **kwargs)
 
 
 def when_delete(index, *args, **kwargs):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     kwargs['method'] = 'DELETE'
     deco = _pecan_generator_wrapper(index.when, *args, **kwargs)
     return _composed(_set_del_code, deco)
 
 
 def _set_del_code(f):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     """Handle logic of disabling json templating engine and setting HTTP code.
 
     We return 204 on delete without content. However, pecan defaults empty
@@ -112,6 +122,7 @@ def _set_del_code(f):
 
     @functools.wraps(f)
     def wrapped(*args, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         f(*args, **kwargs)
         pecan.response.status = 204
         pecan.override_template(None)
@@ -122,6 +133,7 @@ def _set_del_code(f):
 
 
 class NeutronPecanController(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     LIST = 'list'
     SHOW = 'show'
@@ -133,6 +145,7 @@ class NeutronPecanController(object):
                  allow_pagination=None, allow_sorting=None,
                  parent_resource=None, member_actions=None,
                  collection_actions=None, item=None, action_status=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         # Ensure dashes are always replaced with underscores
         self.collection = collection and collection.replace('-', '_')
         self.resource = resource and resource.replace('-', '_')
@@ -186,12 +199,14 @@ class NeutronPecanController(object):
         self.action_status = action_status or {}
 
     def _set_response_code(self, result, method_name):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if method_name in self.action_status:
             pecan.response.status = self.action_status[method_name]
         else:
             pecan.response.status = 200 if result else 204
 
     def build_field_list(self, request_fields):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         added_fields = []
         combined_fields = []
         req_fields_set = {f for f in request_fields if f}
@@ -204,6 +219,7 @@ class NeutronPecanController(object):
 
     @property
     def plugin(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not self._plugin:
             self._plugin = manager.NeutronManager.get_plugin_for_resource(
                 self.collection)
@@ -211,12 +227,14 @@ class NeutronPecanController(object):
 
     @property
     def resource_info(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not self._resource_info:
             self._resource_info = attributes.RESOURCES.get(
                 self.collection)
         return self._resource_info
 
     def _get_primary_key(self, default_primary_key='id'):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not self.resource_info:
             return default_primary_key
         for key, value in self.resource_info.items():
@@ -226,22 +244,27 @@ class NeutronPecanController(object):
 
     @property
     def plugin_handlers(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return self._plugin_handlers
 
     @property
     def plugin_lister(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return getattr(self.plugin, self._plugin_handlers[self.LIST])
 
     @property
     def plugin_shower(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return getattr(self.plugin, self._plugin_handlers[self.SHOW])
 
     @property
     def plugin_creator(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return getattr(self.plugin, self._plugin_handlers[self.CREATE])
 
     @property
     def plugin_bulk_creator(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         native = getattr(self.plugin,
                          '%s_bulk' % self._plugin_handlers[self.CREATE],
                          None)
@@ -252,6 +275,7 @@ class NeutronPecanController(object):
         return native
 
     def _emulated_bulk_creator(self, context, **kwargs):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         objs = []
         body = kwargs[self.collection]
         try:
@@ -271,20 +295,25 @@ class NeutronPecanController(object):
 
     @property
     def plugin_deleter(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return getattr(self.plugin, self._plugin_handlers[self.DELETE])
 
     @property
     def plugin_updater(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         return getattr(self.plugin, self._plugin_handlers[self.UPDATE])
 
 
 class ShimRequest(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def __init__(self, context):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.context = context
 
 
 def invert_dict(dictionary):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
     inverted = defaultdict(list)
     for k, v in dictionary.items():
         inverted[v].append(k)
@@ -292,10 +321,12 @@ def invert_dict(dictionary):
 
 
 class ShimItemController(NeutronPecanController):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def __init__(self, collection, resource, item, controller,
                  collection_actions=None, member_actions=None,
                  action_status=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         super(ShimItemController, self).__init__(
             collection, resource, collection_actions=collection_actions,
             member_actions=member_actions, item=item,
@@ -309,6 +340,7 @@ class ShimItemController(NeutronPecanController):
 
     @expose(generic=True)
     def index(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         shim_request = ShimRequest(request.context['neutron_context'])
         kwargs = request.context['uri_identifiers']
         if self.item in self.inverted_collection_actions['GET']:
@@ -327,6 +359,7 @@ class ShimItemController(NeutronPecanController):
 
     @when_delete(index)
     def delete(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not self.controller_delete:
             pecan.abort(405)
         shim_request = ShimRequest(request.context['neutron_context'])
@@ -338,6 +371,7 @@ class ShimItemController(NeutronPecanController):
 
     @when(index, method='PUT')
     def update(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not self.controller_update:
             pecan.abort(405)
         pecan.response.status = self.action_status.get('update', 201)
@@ -354,6 +388,7 @@ class ShimItemController(NeutronPecanController):
 
     @expose()
     def _lookup(self, resource, *remainder):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         request.context['resource'] = self.resource
         return ShimMemberActionController(self.collection, resource, self.item,
                                           self.controller,
@@ -361,10 +396,12 @@ class ShimItemController(NeutronPecanController):
 
 
 class ShimCollectionsController(NeutronPecanController):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def __init__(self, collection, resource, controller,
                  collection_actions=None, member_actions=None,
                  collection_methods=None, action_status=None):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         collection_methods = collection_methods or {}
         super(ShimCollectionsController, self).__init__(
             collection, resource, member_actions=member_actions,
@@ -382,6 +419,7 @@ class ShimCollectionsController(NeutronPecanController):
 
     @expose(generic=True)
     def index(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if (not self.controller_index and
                 request.method not in self.collection_methods):
             pecan.abort(405)
@@ -406,6 +444,7 @@ class ShimCollectionsController(NeutronPecanController):
 
     @when(index, method='POST')
     def create(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if not self.controller_create:
             pecan.abort(405)
         shim_request = ShimRequest(request.context['neutron_context'])
@@ -418,6 +457,7 @@ class ShimCollectionsController(NeutronPecanController):
 
     @expose()
     def _lookup(self, item, *remainder):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         request.context['resource'] = self.resource
         request.context['resource_id'] = item
         return (
@@ -431,9 +471,11 @@ class ShimCollectionsController(NeutronPecanController):
 
 
 class ShimMemberActionController(NeutronPecanController):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def __init__(self, collection, resource, item, controller,
                  member_actions):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         super(ShimMemberActionController, self).__init__(
             collection, resource, member_actions=member_actions, item=item)
         self.controller = controller
@@ -441,6 +483,7 @@ class ShimMemberActionController(NeutronPecanController):
 
     @expose(generic=True)
     def index(self):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         if self.resource not in self.inverted_member_actions['GET']:
             pecan.abort(404)
         shim_request = ShimRequest(request.context['neutron_context'])
@@ -450,8 +493,10 @@ class ShimMemberActionController(NeutronPecanController):
 
 
 class PecanResourceExtension(object):
+    LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
 
     def __init__(self, collection, controller, plugin):
+        LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         self.collection = collection
         self.controller = controller
         self.plugin = plugin

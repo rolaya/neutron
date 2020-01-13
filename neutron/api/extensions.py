@@ -35,6 +35,7 @@ from neutron import wsgi
 from neutron.common import log_utils
 
 
+#rolaya
 LOG = logging.getLogger(__name__)
 
 
@@ -44,6 +45,8 @@ _PLUGIN_AGNOSTIC_EXTENSIONS = set()
 
 def register_custom_supported_check(alias, f, plugin_agnostic=False):
     LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
+    LOG.info('extension: %s', alias)
+
     '''Register a custom function to determine if extension is supported.
 
     Consequent calls for the same alias replace the registered function.
@@ -120,6 +123,12 @@ class ExtensionController(wsgi.Controller):
         ext_data['description'] = ext.get_description()
         ext_data['updated'] = ext.get_updated()
         ext_data['links'] = []  # TODO(dprince): implement extension links
+
+        LOG.info('extension name:        %s()', ext_data['name'])
+        LOG.info('extension alias:       %s()', ext_data['alias'])
+        LOG.info('extension description: %s()', ext_data['description'])
+        LOG.info('extension updated:     %s()', ext_data['updated'])
+
         return ext_data
 
     def index(self, request):
@@ -311,6 +320,7 @@ class ExtensionManager(object):
     def __init__(self, path):
         LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         LOG.info('Initializing extension manager.')
+        LOG.info('path: %s', path)
         self.path = path
         self.extensions = {}
         self._load_all_extensions()
@@ -465,6 +475,7 @@ class ExtensionManager(object):
         """
 
         for path in self.path.split(':'):
+            LOG.info('%s(): extension path: %s', log_utils.get_fname(1), path)
             if os.path.exists(path):
                 self._load_all_extensions_from_path(path)
             else:
@@ -472,6 +483,8 @@ class ExtensionManager(object):
 
     def _load_all_extensions_from_path(self, path):
         LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
+        LOG.info('%s(): extension path: %s', log_utils.get_fname(1), path)
+
         # Sorting the extension list makes the order in which they
         # are loaded predictable across a cluster of load-balanced
         # Neutron Servers
@@ -481,6 +494,7 @@ class ExtensionManager(object):
                 mod_name, file_ext = os.path.splitext(os.path.split(f)[-1])
                 ext_path = os.path.join(path, f)
                 if file_ext.lower() == '.py' and not mod_name.startswith('_'):
+                    LOG.info('%s(): loading extension source: %s', log_utils.get_fname(1), ext_path)
                     mod = imp.load_source(mod_name, ext_path)
                     ext_name = mod_name.capitalize()
                     new_ext_class = getattr(mod, ext_name, None)
@@ -531,6 +545,9 @@ class PluginAwareExtensionManager(ExtensionManager):
             return False
 
         alias = extension.get_alias()
+        
+        LOG.info('%s(): alias: %s', log_utils.get_fname(1), alias)
+
         if alias in EXTENSION_SUPPORTED_CHECK_MAP:
             return EXTENSION_SUPPORTED_CHECK_MAP[alias]()
 
@@ -540,6 +557,8 @@ class PluginAwareExtensionManager(ExtensionManager):
     def _plugins_support(self, extension):
         LOG.info('%s(): caller(): %s', log_utils.get_fname(1), log_utils.get_fname(2))
         alias = extension.get_alias()
+        LOG.info('%s(): extension alias: %s', log_utils.get_fname(1), alias)
+
         supports_extension = alias in self.get_supported_extension_aliases()
         if not supports_extension:
             LOG.info("Extension %s not supported by any of loaded "

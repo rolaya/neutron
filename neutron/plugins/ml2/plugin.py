@@ -125,6 +125,7 @@ from neutron.plugins.ml2 import rpc
 from neutron.quota import resource_registry
 from neutron.services.segments import plugin as segments_plugin
 from neutron.common import log_utils
+#rolaya: possible qos
 
 LOG = log.getLogger(__name__)
 
@@ -179,6 +180,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     # order to ensure it is qualified by class
     __filter_validation_support = True
 
+    #rolaya
     # List of supported extensions
     _supported_extension_aliases = [provider_net.ALIAS,
                                     external_net.ALIAS, portbindings.ALIAS,

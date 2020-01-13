@@ -15,6 +15,7 @@
 
 from neutron_lib.agent import topics
 from neutron_lib.api.definitions import port_security as psec
+#rolaya: possible qos
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import uplink_status_propagation as usp
 from neutron_lib.callbacks import resources

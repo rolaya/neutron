@@ -43,6 +43,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     'port-security',
     'provider',
     'quotas',
+    'qos'
     'rbac-policies',
     'standard-attr-revisions',
     'security-group',
